@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flaky or Real? — Drex decides | Nace AI Drexathon 2026</title>
+<style>
+  :root{
+    --bg:#F7F7F4; --card:#FFFFFF; --ink:#14161A; --muted:#5B6270; --line:#E3E4E0;
+    --accent:#0E7C66; --accent-soft:#E3F2EE; --ph:#B45309; --ph-bg:#FFF4E0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#E9E9E5;overflow:hidden;
+    font-family:"Inter","Segoe UI",system-ui,-apple-system,Helvetica,Arial,sans-serif;color:var(--ink)}
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{width:1920px;height:1080px;position:relative;transform-origin:center center;flex:none}
+  .slide{position:absolute;inset:0;background:var(--bg);padding:110px 140px 120px;display:none;flex-direction:column}
+  .slide.active{display:flex}
+  .slide::before{content:"";position:absolute;left:0;top:0;bottom:0;width:14px;background:var(--accent)}
+  .kicker{font-size:26px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:22px}
+  h1{font-size:112px;line-height:1.02;font-weight:800;letter-spacing:-.03em}
+  h2{font-size:72px;line-height:1.08;font-weight:800;letter-spacing:-.02em;margin-bottom:44px}
+  h3{font-size:34px;font-weight:700;margin-bottom:12px}
+  p,li{font-size:36px;line-height:1.4;color:var(--ink)}
+  .muted{color:var(--muted)}
+  .accent{color:var(--accent)}
+  ul.clean{list-style:none}
+  ul.clean li{padding-left:44px;position:relative;margin-bottom:22px}
+  ul.clean li::before{content:"";position:absolute;left:0;top:20px;width:20px;height:6px;background:var(--accent);border-radius:3px}
+  .ph{background:var(--ph-bg);color:var(--ph);border:2px dashed #E5A54B;border-radius:10px;padding:2px 12px;font-weight:700;font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:.82em;white-space:nowrap}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:56px;flex:1;min-height:0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:40px 44px;box-shadow:0 2px 0 rgba(0,0,0,.03)}
+  .imgslot{position:relative;background:var(--card);border:2px dashed #C9CCC4;border-radius:22px;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
+  .imgslot img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+  .imgslot .fallback{display:none;text-align:center;color:var(--ph);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:28px;padding:30px}
+  .imgslot.missing .fallback{display:block}
+  .imgslot.missing img{display:none}
+  .imgslot.loaded{border:1px solid var(--line)}
+  footer{position:absolute;left:140px;right:140px;bottom:44px;display:flex;justify-content:space-between;font-size:22px;color:var(--muted);border-top:1px solid var(--line);padding-top:18px}
+  footer b{color:var(--accent);font-weight:700}
+  /* title */
+  .title-wrap{flex:1;display:flex;flex-direction:column;justify-content:center}
+  .hook{font-size:48px;line-height:1.3;color:var(--muted);margin-top:40px;max-width:1400px}
+  .hook strong{color:var(--ink)}
+  .byline{margin-top:70px;font-size:30px;color:var(--muted)}
+  .pill{display:inline-block;background:var(--accent-soft);color:var(--accent);font-weight:700;border-radius:999px;padding:8px 24px;font-size:26px;margin-right:12px}
+  /* problem */
+  .quote{font-size:40px;line-height:1.35;border-left:8px solid var(--accent);padding:10px 0 10px 36px;margin-top:20px}
+  .verdict{display:flex;gap:24px;margin-top:34px}
+  .verdict div{flex:1;border-radius:18px;padding:26px 30px;font-size:30px}
+  .verdict .bad{background:#F1F1EE}
+  .verdict .good{background:var(--accent-soft)}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  /* learning */
+  .insight{font-size:52px;line-height:1.2;font-weight:800;letter-spacing:-.01em;margin-bottom:36px}
+  /* pipeline */
+  .pipe{display:flex;align-items:stretch;gap:0;margin-top:20px}
+  .node{flex:1;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:34px 30px;text-align:left}
+  .node .tag{font-size:22px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .node h3{font-size:38px;margin:10px 0 12px}
+  .node p{font-size:27px;line-height:1.35;color:var(--muted)}
+  .node.hl{border:3px solid var(--accent);background:var(--accent-soft)}
+  .arrow{width:70px;display:flex;align-items:center;justify-content:center;font-size:52px;color:var(--accent);font-weight:800}
+  .loop{margin-top:34px;display:flex;align-items:center;gap:22px;font-size:30px;color:var(--muted)}
+  .loop .ret{font-size:46px;color:var(--accent)}
+  .policy{display:flex;gap:18px;margin-top:40px}
+  .policy div{flex:1;border-radius:16px;padding:20px 26px;font-size:28px;background:var(--card);border:1px solid var(--line)}
+  .policy b{display:block;font-size:30px;margin-bottom:4px}
+  /* demo */
+  .demo-center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-start}
+  .demo-big{font-size:150px;font-weight:800;letter-spacing:-.04em;line-height:1}
+  .term{margin-top:50px;background:#14161A;color:#E8EAE6;border-radius:18px;padding:34px 40px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:30px;line-height:1.55;width:100%}
+  .term .c{color:#7FD1BC}
+  .term .d{color:#8A8F98}
+  /* results */
+  table{width:100%;border-collapse:collapse;font-size:28px;background:var(--card);border-radius:18px;overflow:hidden}
+  th,td{text-align:left;padding:14px 24px;border-bottom:1px solid var(--line)}
+  th{font-size:22px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:#FBFBF9}
+  td.drex{background:var(--accent-soft);font-weight:700}
+  th.drex{color:var(--accent);background:var(--accent-soft)}
+  tr:last-child td{border-bottom:none}
+  .res-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:48px;flex:1;min-height:0}
+  .res-right{display:grid;grid-template-rows:1fr 1fr;gap:24px;min-height:0}
+  .cap{font-size:22px;color:var(--muted);margin-top:16px}
+  /* close */
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;flex:1}
+  .three .card p,.three .card li{font-size:30px}
+  .three .card li{margin-bottom:14px}
+  .ask{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .ask h3,.ask p,.ask li{color:#fff}
+  .ask .tag{color:#CFEDE5}
+  /* chrome */
+  #progress{position:fixed;left:0;bottom:0;height:5px;background:var(--accent);transition:width .25s ease;z-index:10}
+  #counter{position:fixed;right:18px;bottom:14px;font-size:13px;color:#888;z-index:10;font-family:ui-monospace,Menlo,monospace}
+  #help{position:fixed;left:18px;bottom:14px;font-size:13px;color:#888;z-index:10;opacity:.0;transition:opacity .3s}
+  body:hover #help{opacity:.8}
+  @media print{
+    html,body{overflow:visible;background:#fff}
+    #viewport{position:static;display:block}
+    #stage{transform:none!important;width:1920px;height:auto}
+    .slide{display:flex!important;position:relative;width:1920px;height:1080px;page-break-after:always}
+    #progress,#counter,#help{display:none}
+    @page{size:1920px 1080px;margin:0}
+  }
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- ============ 1. TITLE ============ -->
+<section class="slide" data-title="Title">
+  <div class="title-wrap">
+    <div class="kicker">Nace AI Drexathon · Apex Predator track</div>
+    <h1>Flaky or real?<br><span class="accent">Let Drex decide.</span></h1>
+    <p class="hook">Our CI was already guessing on every red build. <strong>We made it say how sure it is — and priced being wrong.</strong></p>
+    <div class="byline"><span class="pill">Alexandra</span> Associate Engineer, Agentic Experiences · San Francisco · Nov 14, 2026</div>
+  </div>
+  <footer><span>Built with <b>Drex</b> · <b>NDI</b> (Nace Document Intelligence) · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>1 / 7</span></footer>
+</section>
+
+<!-- ============ 2. PROBLEM ============ -->
+<section class="slide" data-title="Problem">
+  <div class="kicker">The problem</div>
+  <h2>Every red build forces a bet nobody prices.</h2>
+  <div class="grid2">
+    <div>
+      <ul class="clean">
+        <li><b>Flaky tests burn reruns</b> — CI minutes and engineer attention on failures that aren't real.</li>
+        <li><b>They erode trust in CI</b> — once red stops meaning "broken", people stop looking.</li>
+        <li><b>The costly mistake is asymmetric</b> — quarantining a real bug ships it.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Ask a frontier LLM and you get a verdict</h3>
+      <div class="verdict">
+        <div class="bad"><span class="mono">"This test is flaky."</span><br><span class="muted" style="font-size:24px">Confident. No uncertainty. No threshold to tune.</span></div>
+      </div>
+      <h3 style="margin-top:36px">Ask Drex and you get a probability</h3>
+      <div class="verdict">
+        <div class="good"><span class="mono">P(flaky) = <span class="ph">[RESULT: example p]</span></span><br><span class="muted" style="font-size:24px">Calibrated. You choose where to act.</span></div>
+      </div>
+    </div>
+  </div>
+  <footer><span>Built with <b>Drex</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>2 / 7</span></footer>
+</section>
+
+<!-- ============ 3. THE LEARNING ============ -->
+<section class="slide" data-title="The learning">
+  <div class="kicker">What the probabilities revealed</div>
+  <div class="insight"><span class="ph" style="white-space:normal">[INSIGHT: headline learning — e.g. what the shape of the P(flaky) distribution says about flaky vs. real failures]</span></div>
+  <div class="grid2" style="grid-template-columns:1.45fr 1fr">
+    <div class="imgslot" data-src="../results/prob_histogram.png">
+      <img alt="Histogram of Drex P(flaky) across CI failures, split by true label">
+      <div class="fallback">&lt;img src="../results/prob_histogram.png"&gt;<br>[CHART: P(flaky) histogram, by true label]</div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;justify-content:center">
+      <h3>Why it matters</h3>
+      <ul class="clean">
+        <li style="font-size:30px"><span class="ph">[RESULT: share of failures Drex is confident about]</span> can be auto-handled.</li>
+        <li style="font-size:30px">The middle band is where a verdict model is <b>confidently wrong</b> — <span class="ph">[RESULT: LLM error rate in middle band]</span>.</li>
+        <li style="font-size:30px">Wrongly quarantining a real bug costs <span class="ph">[RESULT: cost ratio]</span>× a wasted rerun.</li>
+      </ul>
+    </div>
+  </div>
+  <footer><span>Built with <b>Drex</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>3 / 7</span></footer>
+</section>
+
+<!-- ============ 4. HOW IT WORKS ============ -->
+<section class="slide" data-title="How it works">
+  <div class="kicker">How it works</div>
+  <h2>Extract → score → decide → learn.</h2>
+  <div class="pipe">
+    <div class="node"><div class="tag">1 · Input</div><h3>CI failure log</h3><p>Raw test output, stack trace, retry history.</p></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="tag">2 · NDI</div><h3>Structured fields</h3><p>Error type, test name, timing, infra signals, past pass/fail.</p></div>
+    <div class="arrow">→</div>
+    <div class="node hl"><div class="tag">3 · Drex</div><h3>P(flaky)</h3><p>State + typed question in, calibrated probability out. No prose.</p></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="tag">4 · Policy</div><h3>Two thresholds</h3><p>Turn a probability into an action, priced by a cost table.</p></div>
+  </div>
+  <div class="policy">
+    <div><b class="accent">QUARANTINE</b>P(flaky) ≥ <span class="ph">[RESULT: t_high]</span></div>
+    <div><b>RETRY</b><span class="ph">[RESULT: t_low]</span> ≤ P(flaky) &lt; <span class="ph">[RESULT: t_high]</span></div>
+    <div><b style="color:#B42318">BLOCK + ALERT</b>P(flaky) &lt; <span class="ph">[RESULT: t_low]</span></div>
+  </div>
+  <div class="loop"><span class="ret">↺</span> <span><b style="color:var(--ink)">5 · Feedback:</b> human corrections recalibrate both thresholds against the cost table — wrongly quarantining a real bug is the expensive mistake.</span></div>
+  <footer><span>Built with <b>Drex</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>4 / 7</span></footer>
+</section>
+
+<!-- ============ 5. LIVE DEMO ============ -->
+<section class="slide" data-title="Live demo">
+  <div class="demo-center">
+    <div class="kicker">Live demo</div>
+    <div class="demo-big">Watch it decide.</div>
+    <div class="term">
+      <div><span class="d">$</span> <span class="c">[DEMO: command to run the loop on a fresh CI failure]</span></div>
+      <div class="d"># 1. NDI pulls fields from the log</div>
+      <div class="d"># 2. Drex returns P(flaky)</div>
+      <div class="d"># 3. Policy picks QUARANTINE / RETRY / BLOCK</div>
+      <div class="d"># 4. A human correction moves the thresholds</div>
+    </div>
+  </div>
+  <footer><span>Built with <b>Drex</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>5 / 7</span></footer>
+</section>
+
+<!-- ============ 6. RESULTS ============ -->
+<section class="slide" data-title="Results">
+  <div class="kicker">Results · same failures, same cost table</div>
+  <h2 style="margin-bottom:30px;font-size:60px">Drex vs. a frontier LLM, before and after learning.</h2>
+  <div class="res-grid">
+    <div>
+      <table>
+        <tr><th>Metric</th><th class="drex">Drex + policy</th><th>Frontier LLM <span style="text-transform:none;letter-spacing:0">(<span class="ph" style="font-size:18px">[MODEL]</span> on DeepInfra)</span></th></tr>
+        <tr><td>Accuracy</td><td class="drex"><span class="ph">[RESULT: accuracy]</span></td><td><span class="ph">[RESULT: accuracy]</span></td></tr>
+        <tr><td>Real bugs quarantined</td><td class="drex"><span class="ph">[RESULT: count]</span></td><td><span class="ph">[RESULT: count]</span></td></tr>
+        <tr><td>Expected cost</td><td class="drex"><span class="ph">[RESULT: cost]</span></td><td><span class="ph">[RESULT: cost]</span></td></tr>
+        <tr><td>Latency (median)</td><td class="drex"><span class="ph">[RESULT: ms]</span></td><td><span class="ph">[RESULT: ms]</span></td></tr>
+        <tr><td>$ / 1k decisions</td><td class="drex"><span class="ph">[RESULT: $]</span></td><td><span class="ph">[RESULT: $]</span></td></tr>
+      </table>
+      <p class="cap">Evaluated on <span class="ph">[RESULT: n failures]</span> labeled CI failures. Cost table: <span class="ph">[RESULT: cost table summary]</span>.</p>
+    </div>
+    <div class="res-right">
+      <div class="imgslot" data-src="../results/drex_vs_llm.png">
+        <img alt="Drex vs frontier LLM comparison chart">
+        <div class="fallback">&lt;img src="../results/drex_vs_llm.png"&gt;<br>[CHART: Drex vs LLM]</div>
+      </div>
+      <div class="imgslot" data-src="../results/cost_before_after.png">
+        <img alt="Expected cost before and after threshold recalibration">
+        <div class="fallback">&lt;img src="../results/cost_before_after.png"&gt;<br>[CHART: cost before → after learning]<br>[RESULT: expected cost before → after]</div>
+      </div>
+    </div>
+  </div>
+  <footer><span>Built with <b>Drex</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>6 / 7</span></footer>
+</section>
+
+<!-- ============ 7. WHY / NEXT / ASK ============ -->
+<section class="slide" data-title="Why, next, ask">
+  <div class="kicker">Takeaway</div>
+  <h2>A verdict can't learn your costs. A probability can.</h2>
+  <div class="three">
+    <div class="card">
+      <div class="kicker" style="font-size:22px;margin-bottom:12px">Why probabilities &gt; verdicts</div>
+      <ul class="clean">
+        <li>Thresholds are a <b>business decision</b>, not a prompt.</li>
+        <li>Uncertainty routes the hard cases to a human.</li>
+        <li>Corrections move a number, not a prompt rewrite.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="kicker" style="font-size:22px;margin-bottom:12px">What's next</div>
+      <ul class="clean">
+        <li>Run as a CI check on real pipelines.</li>
+        <li>Per-repo cost tables and thresholds.</li>
+        <li>Same loop for other triage calls: <span class="muted">alerts, PR risk, incident paging.</span></li>
+      </ul>
+    </div>
+    <div class="card ask">
+      <div class="kicker tag" style="font-size:22px;margin-bottom:12px">The ask</div>
+      <ul class="clean">
+        <li>Pilot it on one team's CI.</li>
+        <li>Send us your flakiest repo.</li>
+        <li>Judge us on the expected cost, not the accuracy.</li>
+      </ul>
+    </div>
+  </div>
+  <footer><span>Built with <b>Drex</b> · <b>NDI</b> (Nace Document Intelligence) · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>7 / 7</span></footer>
+</section>
+
+</div></div>
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="help">← → / Space / PgUp PgDn · Home End · 1–7 · F fullscreen</div>
+
+<script>
+(function(){
+  const slides=[...document.querySelectorAll('.slide')];
+  const stage=document.getElementById('stage');
+  const prog=document.getElementById('progress'), ctr=document.getElementById('counter');
+  let i=0;
+  // image slots: load if file exists, otherwise show placeholder
+  document.querySelectorAll('.imgslot').forEach(s=>{
+    const img=s.querySelector('img');
+    s.classList.add('missing');
+    img.onload=()=>{s.classList.remove('missing');s.classList.add('loaded')};
+    img.onerror=()=>{s.classList.add('missing')};
+    img.src=s.dataset.src;
+  });
+  function fit(){
+    const k=Math.min(window.innerWidth/1920,window.innerHeight/1080);
+    stage.style.transform='scale('+k+')';
+  }
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,j)=>s.classList.toggle('active',j===i));
+    prog.style.width=((i+1)/slides.length*100)+'%';
+    ctr.textContent=(i+1)+' / '+slides.length;
+    if(location.hash!=='#'+(i+1)) history.replaceState(null,'','#'+(i+1));
+  }
+  document.addEventListener('keydown',e=>{
+    const k=e.key;
+    if(['ArrowRight','ArrowDown','PageDown',' ','Enter','n'].includes(k)){e.preventDefault();show(i+1)}
+    else if(['ArrowLeft','ArrowUp','PageUp','Backspace','p'].includes(k)){e.preventDefault();show(i-1)}
+    else if(k==='Home'){show(0)} else if(k==='End'){show(slides.length-1)}
+    else if(/^[1-9]$/.test(k)){show(+k-1)}
+    else if(k==='f'||k==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{})}
+  });
+  document.addEventListener('click',e=>{ if(e.clientX>window.innerWidth/2) show(i+1); else show(i-1); });
+  window.addEventListener('resize',fit);
+  fit();
+  show((parseInt(location.hash.slice(1))||1)-1);
+})();
+</script>
+</body>
+</html>
