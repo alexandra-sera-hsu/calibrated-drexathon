@@ -2,6 +2,8 @@
 
 **Nace AI Drexathon 2026 · Apex Predator track · Team Calibrated (Alexandra).** *Take a frontier-LLM task, hand the decisions to Drex, and prove it faster, cheaper, or more accurate.*
 
+Every CI pipeline has a smoke alarm that goes off when you make toast: flaky tests. Teams assume they need a smarter AI to read the logs, but the expensive part is the decision. One wrong quarantine ships a real bug, and one wrong block burns an engineer's hour. Calibrated uses Drex probabilities to make the call — quarantine, retry, or block — based on what each mistake costs.
+
 > **On 60 labeled CI failures, Drex (`drex-max-v1.1`) + a cost-aware policy reached 96.7% accuracy with 0 real bugs quarantined. Expected cost was ~48% lower than Llama-3.3-70B on DeepInfra (118 vs 228 eng-min) and p50 latency was 8x faster (292 vs 2,456 ms).** On the 44 held-out cases, expected cost was 98 vs 176. DeepSeek-V3.2 reached 88.3% accuracy at a cost of 210. A "retry passed ⇒ quarantine" rule quarantined 2 real bugs and cost 358. Per call, Drex costs about the same as Llama ($0.072 vs $0.064 per 1k). The savings come from better decisions, not cheaper tokens. Evidence: [`results/metrics_real.md`](results/metrics_real.md).
 
 ## How we used Drex / Intern / NDI / DeepInfra

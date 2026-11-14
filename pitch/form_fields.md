@@ -12,9 +12,9 @@ Apex Predator
 Calibrated (Alexandra, solo)
 
 ## Brief explanation
-(1,060 characters without the Adobe line. Replace `[ADOBE LINE]` with one sentence, e.g. "Pitch visuals made with Adobe Express.", or delete it.)
+(643 characters with the Adobe placeholder. Replace `[ADOBE LINE]` with one sentence, e.g. "Pitch visuals made with Adobe Express.", or delete it. 630 characters without it.)
 
-Drex beats frontier LLMs at CI triage: 96.7% accuracy, 0 real bugs quarantined, ~48% lower expected cost (118 vs 228 eng-min) and 8x faster (292 vs 2,456 ms p50) than Llama-3.3-70B on 60 labeled CI failures; held-out 44: 98 vs 176. Problem: every red build forces a quarantine/retry/block call, and wrongly quarantining a real bug ships it. How: NDI extracted structured fields from all 60 raw logs; Drex (drex-max-v1.1) returns one calibrated P(flaky); two thresholds fit to an explicit cost table pick the action. DeepInfra ran the baselines (Llama-3.3-70B 85.0%, DeepSeek-V3.2 88.3%) and Intern's agent. Intern ran the loop headless: Qwen3.8-27B on DeepInfra triaged 3 cases via our tools while Drex supervised as System 1 (16 checks, 6 turns, 39 s) and flagged the Drex-vs-human disagreement. Insight: all 24 real regressions scored P(flaky) <= 0.35, 34/36 flaky >= 0.93, none in the 0.40-0.80 retry band; the LLMs hedged with RETRY on 41/60. [ADOBE LINE] Evidence: results/metrics_real.md, drex_real.json, ndi_real.json, llm_real.json, intern_excerpt.md.
+Every CI pipeline has a smoke alarm that goes off when you make toast: flaky tests. Teams assume they need a smarter AI to read the logs, but the expensive part is the decision. One wrong quarantine ships a real bug, and one wrong block burns an engineer's hour. LLMs hedge: Llama-3.3-70B said "retry" on 41 of 60 real failures. Calibrated uses Drex probabilities to make the call, quarantining, retrying, or blocking based on what each mistake costs. On real logs, it was 96.7% accurate, quarantined zero real bugs, and cut expected engineer-time cost by 48%, at 292 ms per decision. [ADOBE LINE] Built with Intern, NDI, DeepInfra, and Adobe.
 
 ## Presentation comment
 Live demo: `python demo.py --live` (NDI → Drex → policy → feedback on case_007). Offline replay of the logged real results: `python demo.py --offline`. The deck is pitch/index.html, with a PDF at pitch/Calibrated_Drexathon.pdf.

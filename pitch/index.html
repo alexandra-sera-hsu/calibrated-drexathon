@@ -94,6 +94,31 @@
   .ask{background:var(--accent);color:#fff;border-color:var(--accent)}
   .ask h3,.ask p,.ask li{color:#fff}
   .ask .tag{color:#CFEDE5}
+  /* challenger extras */
+  .stakes{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:48px}
+  .stakes .card{padding:44px 48px}
+  .stakes .card h3{font-size:40px;margin:10px 0 18px}
+  .stakes .card p{font-size:32px;line-height:1.4;color:var(--muted)}
+  .stakes .tag-warn{font-size:22px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#B45309}
+  .stakes .tag-danger{font-size:22px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#B42318}
+  .reframe{font-size:40px;line-height:1.4;color:var(--muted);max-width:1640px;margin-bottom:8px}
+  .reframe strong{color:var(--ink)}
+  .pain-stats{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:44px;flex:1;min-height:0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:44px 48px;box-shadow:0 2px 0 rgba(0,0,0,.03);display:flex;flex-direction:column;justify-content:center}
+  .stat .num{font-size:108px;font-weight:800;letter-spacing:-.04em;line-height:1}
+  .stat .num span{font-size:52px;color:var(--muted);font-weight:700}
+  .stat h3{font-size:32px;margin:18px 0 8px}
+  .stat p{font-size:28px;line-height:1.4;color:var(--muted)}
+  .strip{display:flex;gap:16px;margin:0 0 32px}
+  .strip div{flex:1;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 22px}
+  .strip .tag{font-size:18px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .strip b{display:block;font-size:26px;margin-top:4px}
+  .learn-callout{margin-top:22px;font-size:28px;line-height:1.4;color:var(--muted)}
+  .learn-callout strong{color:var(--ink)}
+  h2.tight{margin-bottom:28px}
+  .policy-rows{margin-top:18px;display:flex;flex-direction:column;gap:10px}
+  .policy-rows div{display:flex;justify-content:space-between;align-items:baseline;border:1px solid var(--line);border-radius:14px;padding:14px 20px;font-size:28px;background:#FBFBF9}
+  .policy-rows b{font-size:28px;font-weight:700}
   /* chrome */
   #progress{position:fixed;left:0;bottom:0;height:5px;background:var(--accent);transition:width .25s ease;z-index:10}
   #counter{position:fixed;right:18px;bottom:14px;font-size:13px;color:#888;z-index:10;font-family:ui-monospace,Menlo,monospace}
@@ -127,7 +152,7 @@
 <body>
 <div id="viewport"><div id="stage">
 
-<!-- ============ 1. TITLE ============ -->
+<!-- ============ 1. TITLE / WARMER ============ -->
 <section class="slide" data-title="Title">
   <div id="opener-wrap" aria-hidden="true">
     <video id="opener-video" muted loop playsinline preload="auto" src="../adobe/opener.mp4"></video>
@@ -137,79 +162,78 @@
   <div class="title-wrap">
     <div class="kicker">Team Calibrated · Nace AI Drexathon · Apex Predator track</div>
     <h1>Flaky or real?<br><span class="accent">Let Drex decide.</span></h1>
-    <p class="hook">Our CI was already guessing on every red build. <strong>We made it say how sure it is — and priced being wrong.</strong></p>
-    <p class="hook" style="margin-top:28px;font-size:40px"><strong class="accent">96.7% accurate · 0 real bugs quarantined · ~48% lower expected cost · 8× faster</strong> than frontier LLMs on DeepInfra, on 60 real CI failures.</p>
+    <p class="hook">A flaky test is a test that sometimes fails even when the code is fine — <strong>like a smoke alarm that goes off when you make toast.</strong></p>
+    <p class="hook" style="margin-top:28px;font-size:40px">Every red build forces the same call: <strong>toast, or a real fire?</strong></p>
     <div class="byline"><span class="pill">Alexandra</span> Associate Engineer, Agentic Experiences · San Francisco · Nov 14, 2026</div>
   </div>
   <footer><span>Built with <b>Drex</b> · <b>Intern</b> (Nace harness) · <b>NDI</b> (Nace Document Intelligence) · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>1 / 7</span></footer>
 </section>
 
-<!-- ============ 2. PROBLEM ============ -->
-<section class="slide" data-title="Problem">
-  <div class="kicker">The problem</div>
-  <h2>Every red build forces a bet nobody prices.</h2>
-  <div class="grid2">
-    <div>
-      <ul class="clean">
-        <li><b>Flaky tests burn reruns</b> — CI minutes and engineer attention on failures that aren't real.</li>
-        <li><b>They erode trust in CI</b> — once red stops meaning "broken", people stop looking.</li>
-        <li><b>The costly mistake is asymmetric</b> — quarantining a real bug ships it.</li>
-      </ul>
+<!-- ============ 2. STAKES ============ -->
+<section class="slide" data-title="The stakes">
+  <div class="kicker">The stakes</div>
+  <h2 class="tight">Guess wrong, and you either waste an hour or ship a bug.</h2>
+  <p class="quote">Every failure forces a call: is it the toast, or a real fire? The two mistakes do not cost the same.</p>
+  <div class="stakes">
+    <div class="card">
+      <div class="tag-warn">Wrong call · it was toast</div>
+      <h3>You waste an engineer’s hour.</h3>
+      <p>A false alarm still pages someone. They dig through the log, rerun the test, and lose an hour that wasn’t a fire.</p>
     </div>
     <div class="card">
-      <h3>Ask a frontier LLM and you get a verdict</h3>
-      <div class="verdict">
-        <div class="bad"><span class="mono">"This test is flaky."</span><br><span class="muted" style="font-size:24px">Confident. No uncertainty. No threshold to tune.</span></div>
-      </div>
-      <h3 style="margin-top:36px">Ask Drex and you get a probability</h3>
-      <div class="verdict">
-        <div class="good"><span class="mono">P(flaky) = 0.074 <span class="muted" style="font-size:22px">(case_007, a real race bug whose retry passed)</span></span><br><span class="muted" style="font-size:24px">Calibrated. You choose where to act.</span></div>
-      </div>
+      <div class="tag-danger">Wrong call · it was a fire</div>
+      <h3>A real bug ships.</h3>
+      <p>Quarantine a real regression and the smoke alarm goes quiet — while the fire moves into production.</p>
     </div>
   </div>
   <footer><span>Built with <b>Drex</b> · <b>Intern</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>2 / 7</span></footer>
 </section>
 
-<!-- ============ 3. THE LEARNING ============ -->
-<section class="slide" data-title="The learning">
-  <div class="kicker">What the probabilities revealed</div>
-  <div class="insight">Drex splits failures into two clean clusters, and <span class="accent">leaves the retry band empty.</span></div>
-  <div class="grid2" style="grid-template-columns:1.45fr 1fr">
-    <div class="imgslot" data-src="../results/prob_histogram.png">
-      <img alt="Histogram of Drex P(flaky) across CI failures, split by true label">
-      <div class="fallback">&lt;img src="../results/prob_histogram.png"&gt;<br>[CHART: P(flaky) histogram, by true label]</div>
+<!-- ============ 3. REFRAME + PAIN ============ -->
+<section class="slide" data-title="The reframe">
+  <div class="kicker">The insight they don’t have</div>
+  <h2 class="tight">The expensive part isn’t reading the logs. It’s the decision.</h2>
+  <p class="reframe">Most teams think the fix is a <strong>smarter AI that reads the logs</strong>. A typical LLM shrugs — and pushes the call back onto an engineer.</p>
+  <div class="pain-stats">
+    <div class="stat">
+      <div class="num">41<span> / 60</span></div>
+      <h3>Llama-3.3-70B said “retry.”</h3>
+      <p>On 60 real CI failures, the model hedged 41 times. That’s not triage. That’s hesitation.</p>
     </div>
-    <div class="card" style="display:flex;flex-direction:column;justify-content:center">
-      <h3>Why it matters</h3>
-      <ul class="clean">
-        <li style="font-size:28px;margin-bottom:16px">All <b>24 real regressions</b> scored P(flaky) ≤ 0.35; <b>34 of 36 flaky</b> scored ≥ 0.93; <b>0 of 60</b> landed in the 0.40–0.80 retry band.</li>
-                <li style="font-size:28px;margin-bottom:16px">A “retry passed ⇒ flaky” rule <b>quarantined 2 real race bugs</b>; Drex blocked both (P = 0.07, 0.09). Frontier LLMs hedged with <b>RETRY on 41 of 60</b>.</li>
-        <li style="font-size:28px;margin-bottom:16px"><b>58 of 60</b> scored &lt; 0.1 or &gt; 0.9: handled automatically. A wrong quarantine costs <b>20×</b> a rerun.</li>
-      </ul>
+    <div class="stat">
+      <div class="num">36<span> / 60</span></div>
+      <h3>DeepSeek-V3.2 said it too.</h3>
+      <p>Same logs, same cost table, same shrug. Drex retried none of the 60.</p>
     </div>
   </div>
   <footer><span>Built with <b>Drex</b> · <b>Intern</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>3 / 7</span></footer>
 </section>
 
-<!-- ============ 4. HOW IT WORKS ============ -->
-<section class="slide" data-title="How it works">
-  <div class="kicker">How it works</div>
-  <h2>Extract → score → decide → learn.</h2>
-  <div class="pipe">
-    <div class="node"><div class="tag">1 · Input</div><h3>CI failure log</h3><p>Raw test output, stack trace, retry history.</p></div>
-    <div class="arrow">→</div>
-    <div class="node"><div class="tag">2 · NDI</div><h3>Structured fields</h3><p>Error type, test name, timing, infra signals, past pass/fail.</p></div>
-    <div class="arrow">→</div>
-    <div class="node hl"><div class="tag">3 · Drex</div><h3>P(flaky)</h3><p>State + typed question in, calibrated probability out. No prose.</p></div>
-    <div class="arrow">→</div>
-    <div class="node"><div class="tag">4 · Policy</div><h3>Two thresholds</h3><p>Turn a probability into an action, priced by a cost table.</p></div>
+<!-- ============ 4. THE NEW WAY ============ -->
+<section class="slide" data-title="The new way">
+  <div class="kicker">The new way</div>
+  <h2 class="tight">Drex gives the odds. The loop makes the call.</h2>
+  <div class="strip">
+    <div><div class="tag">1 · NDI</div><b>Extract the log</b></div>
+    <div><div class="tag">2 · Drex</div><b>P(flaky), not a verdict</b></div>
+    <div><div class="tag">3 · Policy</div><b>Quarantine, retry, or block</b></div>
+    <div><div class="tag">4 · Learn</div><b>Refit only if cost falls</b></div>
   </div>
-  <div class="policy">
-    <div><b class="accent">QUARANTINE</b>P(flaky) ≥ 0.80</div>
-    <div><b>RETRY</b>0.40 ≤ P(flaky) &lt; 0.80</div>
-    <div><b style="color:#B42318">BLOCK + ALERT</b>P(flaky) &lt; 0.40</div>
+  <div class="grid2" style="grid-template-columns:1.35fr 1fr">
+    <div class="imgslot" data-src="../results/prob_histogram.png">
+      <img alt="Histogram of Drex P(flaky) across CI failures, split by true label">
+      <div class="fallback">&lt;img src="../results/prob_histogram.png"&gt;<br>[CHART: P(flaky) histogram, by true label]</div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;justify-content:center">
+      <h3>Two thresholds, priced by cost</h3>
+      <div class="policy-rows">
+        <div><b class="accent">QUARANTINE</b><span>P ≥ 0.80</span></div>
+        <div><b>RETRY</b><span>0.40 – 0.80</span></div>
+        <div><b style="color:#B42318">BLOCK</b><span>P &lt; 0.40</span></div>
+      </div>
+      <p class="learn-callout">The loop doesn’t overreact. One noisy override would have raised cost from <strong>118 to 484</strong> engineer-minutes. The thresholds held at 0.40 / 0.80.</p>
+    </div>
   </div>
-  <div class="loop"><span class="ret">↺</span> <span><b style="color:var(--ink)">5 · Feedback:</b> human corrections refit both thresholds against the cost table. The thresholds only move when moving them lowers total cost. <b style="color:var(--ink)">Run by Intern</b>, the Nace harness. Qwen3.8-27B on DeepInfra did the work and Drex was System 1, supervising every turn: 3 cases, 15 triage commands, 16 Drex checks, 6 turns, 39 s, and it flagged the one Drex-vs-human disagreement (case_049).</span></div>
   <footer><span>Built with <b>Drex</b> · <b>Intern</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>4 / 7</span></footer>
 </section>
 
@@ -220,19 +244,20 @@
     <div class="demo-big">Watch it decide.</div>
     <div class="term">
       <div><span class="d">$</span> <span class="c">python demo.py --live</span></div>
+      <div class="d"># Case 7: a real bug that looks flaky — the retry passed</div>
       <div class="d"># 1. NDI pulls fields from the log</div>
       <div class="d"># 2. Drex returns P(flaky)</div>
       <div class="d"># 3. Policy picks QUARANTINE / RETRY / BLOCK</div>
-      <div class="d"># 4. A human correction is tested against the cost table: do the thresholds move?</div>
+      <div class="d"># 4. A human override is tested against the cost table</div>
     </div>
   </div>
   <footer><span>Built with <b>Drex</b> · <b>Intern</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>5 / 7</span></footer>
 </section>
 
-<!-- ============ 6. RESULTS ============ -->
-<section class="slide" data-title="Results">
-  <div class="kicker">Results · same failures, same cost table</div>
-  <h2 style="margin-bottom:30px;font-size:60px">Drex: 48% lower cost, 8× faster than a frontier LLM.</h2>
+<!-- ============ 6. PROOF ============ -->
+<section class="slide" data-title="Proof">
+  <div class="kicker">Proof · same failures, same cost table</div>
+  <h2 style="margin-bottom:30px;font-size:60px">96.7% accurate. Zero real bugs quarantined. 48% lower cost.</h2>
   <div class="res-grid">
     <div>
       <table>
@@ -242,10 +267,9 @@
         <tr><td>Exp. cost, all 60</td><td class="drex">118 eng-min</td><td>228 eng-min</td></tr>
         <tr><td>Exp. cost, held-out 44</td><td class="drex">98 eng-min</td><td>176 eng-min</td></tr>
         <tr><td>Hedged with RETRY</td><td class="drex">0 / 60</td><td>41 / 60</td></tr>
-        <tr><td>Latency (p50)</td><td class="drex">292 ms</td><td>2,456 ms</td></tr>
-        <tr><td>$ / 1k decisions</td><td class="drex">$0.072</td><td>$0.064</td></tr>
+        <tr><td>Latency (p50)</td><td class="drex">292 ms</td><td>2,456 ms · 8× slower</td></tr>
       </table>
-      <p class="cap">60 labeled CI failures · drex-max-v1.1 · real API calls. Cost table (eng-min): quarantine a real bug 120 · block a flaky test 25 · retry 4–6. DeepSeek-V3.2 (DeepInfra): 88.3%, cost 210, 1,618 ms, RETRY on 36/60. Rule “retry passed ⇒ quarantine”: 93.3%, 2 real bugs quarantined, cost 358. Per call, Drex costs about the same as Llama; the savings come from decisions.</p>
+      <p class="cap">60 labeled CI failures · drex-max-v1.1 · real API calls. DeepSeek-V3.2: 88.3%, cost 210, RETRY on 36/60. Intern ran the loop for real: 6 turns, 39 s, 16 Drex checks. The savings come from better decisions, not cheaper tokens.</p>
     </div>
     <div class="res-right">
       <div class="imgslot" data-src="../results/drex_vs_llm.png">
@@ -261,35 +285,14 @@
   <footer><span>Built with <b>Drex</b> · <b>Intern</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>6 / 7</span></footer>
 </section>
 
-<!-- ============ 7. WHY / NEXT / ASK ============ -->
-<section class="slide" data-title="Why, next, ask">
-  <div class="kicker">Takeaway</div>
-  <h2>A verdict can't learn your costs. A probability can.</h2>
-  <div class="three">
-    <div class="card">
-      <div class="kicker" style="font-size:22px;margin-bottom:12px">Why probabilities &gt; verdicts</div>
-      <ul class="clean">
-        <li>Thresholds are a <b>business decision</b>, not a prompt.</li>
-        <li>Uncertainty routes the hard cases to a human.</li>
-        <li>Corrections move a number, not a prompt rewrite.</li>
-      </ul>
-    </div>
-    <div class="card">
-      <div class="kicker" style="font-size:22px;margin-bottom:12px">What's next</div>
-      <ul class="clean">
-        <li>Run as a CI check on real pipelines.</li>
-        <li>Per-repo cost tables and thresholds.</li>
-        <li>Same loop for other triage calls: <span class="muted">alerts, PR risk, incident paging.</span></li>
-      </ul>
-    </div>
-    <div class="card ask">
-      <div class="kicker tag" style="font-size:22px;margin-bottom:12px">The ask</div>
-      <ul class="clean">
-        <li>Pilot it on one team's CI.</li>
-        <li>Send us your flakiest repo.</li>
-        <li>Judge us on the expected cost, not the accuracy.</li>
-      </ul>
-    </div>
+<!-- ============ 7. CLOSE ============ -->
+<section class="slide" data-title="Close">
+  <div class="title-wrap">
+    <div class="kicker">The takeaway</div>
+    <h1>Stop asking AI<br>what it thinks.</h1>
+    <p class="hook"><strong>Ask it how sure it is.</strong> That’s what Calibrated means.</p>
+    <p class="hook" style="margin-top:28px;font-size:40px">A verdict can’t learn your costs. A probability can.</p>
+    <div class="byline"><span class="pill">The ask</span> Pilot it on one team’s CI. Send us your flakiest repo.</div>
   </div>
   <footer><span>Built with <b>Drex</b> · <b>Intern</b> (Nace harness) · <b>NDI</b> (Nace Document Intelligence) · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>7 / 7</span></footer>
 </section>
