@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Flaky or Real? — Drex decides | Nace AI Drexathon 2026</title>
+<title>Calibrated: Flaky or Real? — Drex decides | Nace AI Drexathon 2026</title>
 <style>
   :root{
     --bg:#F7F7F4; --card:#FFFFFF; --ink:#14161A; --muted:#5B6270; --line:#E3E4E0;
@@ -80,7 +80,12 @@
   th.drex{color:var(--accent);background:var(--accent-soft)}
   tr:last-child td{border-bottom:none}
   .res-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:48px;flex:1;min-height:0}
-  .res-right{display:grid;grid-template-rows:1fr 1fr;gap:24px;min-height:0}
+  .res-right{display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:24px;min-height:0}
+  .res-right .imgslot{height:100%}
+  .res-right .imgslot img{width:100%;height:100%;object-fit:contain}
+  .res-grid table{font-size:25px}
+  .res-grid th,.res-grid td{padding:9px 20px}
+  .res-grid td{white-space:nowrap}
   .cap{font-size:22px;color:var(--muted);margin-top:16px}
   /* close */
   .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;flex:1}
@@ -110,9 +115,10 @@
 <!-- ============ 1. TITLE ============ -->
 <section class="slide" data-title="Title">
   <div class="title-wrap">
-    <div class="kicker">Nace AI Drexathon · Apex Predator track</div>
+    <div class="kicker">Team Calibrated · Nace AI Drexathon · Apex Predator track</div>
     <h1>Flaky or real?<br><span class="accent">Let Drex decide.</span></h1>
     <p class="hook">Our CI was already guessing on every red build. <strong>We made it say how sure it is — and priced being wrong.</strong></p>
+    <p class="hook" style="margin-top:28px;font-size:40px"><strong class="accent">96.7% accurate · 0 real bugs quarantined · ~48% lower expected cost · 8× faster</strong> than frontier LLMs on DeepInfra, on 60 real CI failures.</p>
     <div class="byline"><span class="pill">Alexandra</span> Associate Engineer, Agentic Experiences · San Francisco · Nov 14, 2026</div>
   </div>
   <footer><span>Built with <b>Drex</b> · <b>Intern</b> (Nace harness) · <b>NDI</b> (Nace Document Intelligence) · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>1 / 7</span></footer>
@@ -147,7 +153,7 @@
 <!-- ============ 3. THE LEARNING ============ -->
 <section class="slide" data-title="The learning">
   <div class="kicker">What the probabilities revealed</div>
-  <div class="insight">Drex split the failures into two clean clusters: all 24 real regressions scored P(flaky) ≤ 0.35, 34 of 36 flaky failures scored ≥ 0.93, and none landed in the 0.40–0.80 retry band. That includes two real race-condition bugs whose retry <i>passed</i>, which a “retry passed ⇒ flaky” rule would have quarantined.</div>
+  <div class="insight">Drex splits failures into two clean clusters, and <span class="accent">leaves the retry band empty.</span></div>
   <div class="grid2" style="grid-template-columns:1.45fr 1fr">
     <div class="imgslot" data-src="../results/prob_histogram.png">
       <img alt="Histogram of Drex P(flaky) across CI failures, split by true label">
@@ -156,9 +162,9 @@
     <div class="card" style="display:flex;flex-direction:column;justify-content:center">
       <h3>Why it matters</h3>
       <ul class="clean">
-        <li style="font-size:30px"><b>58 of 60</b> failures (97%) scored below 0.1 or above 0.9, so they can be handled automatically.</li>
-        <li style="font-size:30px">A “retry passed ⇒ flaky” rule <b>quarantined 2 real bugs</b> that Drex blocked. Frontier LLMs hedged with <b>RETRY on 41 of 60</b>.</li>
-        <li style="font-size:30px">Wrongly quarantining a real bug costs <b>20×</b> a wasted rerun (120 vs 6 eng-min).</li>
+        <li style="font-size:28px;margin-bottom:16px">All <b>24 real regressions</b> scored P(flaky) ≤ 0.35; <b>34 of 36 flaky</b> scored ≥ 0.93; <b>0 of 60</b> landed in the 0.40–0.80 retry band.</li>
+                <li style="font-size:28px;margin-bottom:16px">A “retry passed ⇒ flaky” rule <b>quarantined 2 real race bugs</b>; Drex blocked both (P = 0.07, 0.09). Frontier LLMs hedged with <b>RETRY on 41 of 60</b>.</li>
+        <li style="font-size:28px;margin-bottom:16px"><b>58 of 60</b> scored &lt; 0.1 or &gt; 0.9: handled automatically. A wrong quarantine costs <b>20×</b> a rerun.</li>
       </ul>
     </div>
   </div>
@@ -183,7 +189,7 @@
     <div><b>RETRY</b>0.40 ≤ P(flaky) &lt; 0.80</div>
     <div><b style="color:#B42318">BLOCK + ALERT</b>P(flaky) &lt; 0.40</div>
   </div>
-  <div class="loop"><span class="ret">↺</span> <span><b style="color:var(--ink)">5 · Feedback:</b> human corrections refit both thresholds against the cost table. The thresholds only move when moving them lowers total cost. <b style="color:var(--ink)">Run by Intern</b>, the Nace harness. Qwen3.8-27B on DeepInfra did the work and Drex was System 1, supervising every turn: 3 cases, 15 tool calls, 16 Drex checks, completed in 6 turns.</span></div>
+  <div class="loop"><span class="ret">↺</span> <span><b style="color:var(--ink)">5 · Feedback:</b> human corrections refit both thresholds against the cost table. The thresholds only move when moving them lowers total cost. <b style="color:var(--ink)">Run by Intern</b>, the Nace harness. Qwen3.8-27B on DeepInfra did the work and Drex was System 1, supervising every turn: 3 cases, 15 triage commands, 16 Drex checks, 6 turns, 39 s, and it flagged the one Drex-vs-human disagreement (case_049).</span></div>
   <footer><span>Built with <b>Drex</b> · <b>Intern</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>4 / 7</span></footer>
 </section>
 
@@ -210,14 +216,16 @@
   <div class="res-grid">
     <div>
       <table>
-        <tr><th>Metric</th><th class="drex">Drex + policy</th><th>Frontier LLM <span style="text-transform:none;letter-spacing:0">(Llama-3.3-70B on DeepInfra)</span></th></tr>
+        <tr><th>Metric</th><th class="drex">Drex + policy</th><th>Llama-3.3-70B <span style="text-transform:none;letter-spacing:0">(DeepInfra)</span></th></tr>
         <tr><td>Accuracy</td><td class="drex">96.7%</td><td>85.0%</td></tr>
         <tr><td>Real bugs quarantined</td><td class="drex">0</td><td>0</td></tr>
-        <tr><td>Expected cost</td><td class="drex">118 eng-min</td><td>228 eng-min</td></tr>
-        <tr><td>Latency (median)</td><td class="drex">292 ms</td><td>2,456 ms</td></tr>
+        <tr><td>Exp. cost, all 60</td><td class="drex">118 eng-min</td><td>228 eng-min</td></tr>
+        <tr><td>Exp. cost, held-out 44</td><td class="drex">98 eng-min</td><td>176 eng-min</td></tr>
+        <tr><td>Hedged with RETRY</td><td class="drex">0 / 60</td><td>41 / 60</td></tr>
+        <tr><td>Latency (p50)</td><td class="drex">292 ms</td><td>2,456 ms</td></tr>
         <tr><td>$ / 1k decisions</td><td class="drex">$0.072</td><td>$0.064</td></tr>
       </table>
-      <p class="cap">Evaluated on 60 labeled CI failures (Drex drex-max-v1.1, real API). Cost table, in eng-min: quarantining a real bug = 120, blocking a flaky test = 25, retrying = 4–6. Rule baseline “retry passed ⇒ quarantine”: 93.3% accuracy, 2 real bugs quarantined, cost 358. DeepSeek-V3.2 on DeepInfra: 88.3% accuracy, cost 210, 1,618 ms, $0.154/1k. The LLMs never wrongly quarantined a real bug, but they hedged: they chose RETRY on 41 (Llama) and 36 (DeepSeek) of 60 failures. Drex + policy retried 0.</p>
+      <p class="cap">60 labeled CI failures · drex-max-v1.1 · real API calls. Cost table (eng-min): quarantine a real bug 120 · block a flaky test 25 · retry 4–6. DeepSeek-V3.2 (DeepInfra): 88.3%, cost 210, 1,618 ms, RETRY on 36/60. Rule “retry passed ⇒ quarantine”: 93.3%, 2 real bugs quarantined, cost 358. Per call, Drex costs about the same as Llama; the savings come from decisions.</p>
     </div>
     <div class="res-right">
       <div class="imgslot" data-src="../results/drex_vs_llm.png">

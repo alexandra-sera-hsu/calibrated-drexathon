@@ -1,6 +1,19 @@
-# drex-flaky: a flaky-test quarantine loop where Drex makes the call
+# Calibrated: Flaky or Real? Drex triages your red CI builds
 
-**Nace AI Drexathon 2026, Apex Predator track.** *Take a frontier-LLM task, hand the decisions to Drex, and prove it faster, cheaper, or more accurate.*
+**Nace AI Drexathon 2026 · Apex Predator track · Team Calibrated (Alexandra).** *Take a frontier-LLM task, hand the decisions to Drex, and prove it faster, cheaper, or more accurate.*
+
+> **On 60 labeled CI failures, Drex (`drex-max-v1.1`) + a cost-aware policy reached 96.7% accuracy with 0 real bugs quarantined. Expected cost was ~48% lower than Llama-3.3-70B on DeepInfra (118 vs 228 eng-min) and p50 latency was 8x faster (292 vs 2,456 ms).** On the 44 held-out cases, expected cost was 98 vs 176. DeepSeek-V3.2 reached 88.3% accuracy at a cost of 210. A "retry passed ⇒ quarantine" rule quarantined 2 real bugs and cost 358. Per call, Drex costs about the same as Llama ($0.072 vs $0.064 per 1k). The savings come from better decisions, not cheaper tokens. Evidence: [`results/metrics_real.md`](results/metrics_real.md).
+
+## How we used Drex / Intern / NDI / DeepInfra
+
+| Tool | What it does here | Evidence |
+|---|---|---|
+| **Drex** (`drex-max-v1.1`) | Asks one `noul` question per failure ("is this flaky?") and returns a calibrated P(flaky) that a two-threshold policy turns into QUARANTINE / RETRY / BLOCK. Ran 60 real `POST /v1/systemone` calls. Also served as Intern's System 1 supervisor. | [`results/drex_real.json`](results/drex_real.json), [`drex_decide.py`](drex_decide.py), [`policy.py`](policy.py), [`results/learn_real.json`](results/learn_real.json) |
+| **Intern** (Nace agent harness) | Ran the loop headless. System 2 (Qwen3.8-27B on DeepInfra) triaged 3 cases using only our `triage.py` tools. Drex, as System 1, guarded and supervised the run: 16 checks, 0 failed, 6 turns, 39 s. The agent flagged the Drex-vs-human disagreement on case_049. | [`results/intern_excerpt.md`](results/intern_excerpt.md), [`results/intern_run.jsonl`](results/intern_run.jsonl), [`results/intern_actions.jsonl`](results/intern_actions.jsonl), [`AGENTS.md`](AGENTS.md), [`run_intern.sh`](run_intern.sh) |
+| **NDI** (Nace Document Intelligence) | Extracted structured fields (error type, test name, duration, retry result, recent fail rate, changed files) from all 60 raw CI logs. | [`results/ndi_real.json`](results/ndi_real.json), [`ndi_extract.py`](ndi_extract.py) |
+| **DeepInfra** | Ran the frontier-LLM baselines on the same logs and cost table: Llama-3.3-70B (85.0%, 228 eng-min, RETRY on 41/60) and DeepSeek-V3.2 (88.3%, 210, RETRY on 36/60). It also hosted Intern's System 2 model, Qwen3.8-27B. | [`results/llm_real.json`](results/llm_real.json), [`results/llm2_real.json`](results/llm2_real.json), [`baseline_llm.py`](baseline_llm.py) |
+
+**Key insight:** all 24 real regressions scored P(flaky) ≤ 0.35 and 34 of 36 flaky failures scored ≥ 0.93. No failure fell in the 0.40–0.80 retry band, so Drex + policy retried none. The frontier LLMs hedged with RETRY on 41 of 60 failures. Pitch deck: [`pitch/index.html`](pitch/index.html) ([PDF](pitch/Calibrated_Drexathon.pdf)).
 
 When a CI test fails, someone has to decide whether to **quarantine** it (it's flaky), **retry** it, or **block** the merge (it's a real regression). Teams usually make that call with a yes/no rule or by pasting the log into an LLM. Both give a verdict with no notion of how sure they are, and the two kinds of mistake cost very different amounts:
 
