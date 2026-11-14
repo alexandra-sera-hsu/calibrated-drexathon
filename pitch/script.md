@@ -7,13 +7,9 @@ This is a Challenger pitch. Teach the judges something they didn't know, make th
 
 ---
 
-## 0:00–0:10 · Adobe opener (only if `../adobe/opener.mp4` is in the deck)
+## 0:00–0:30 · Slide 1: Title  (~50 words)
 
-**[Let the 10-second Adobe opener play. Don't talk over it. Advance when the tagline lands: "Flaky or real? Drex knows."]**
-
-## 0:10–0:30 · Slide 1: Title  (~50 words)
-
-**[If the opener was missing, start immediately.]** Hi, I'm Alexandra. A flaky test is a test that sometimes fails even when the code is fine, like a smoke alarm that goes off when you make toast. Every time one fails, an engineer has to decide: is it the toast, or a real fire?
+Hi, I'm Alexandra. A flaky test is a test that sometimes fails even when the code is fine, like a smoke alarm that goes off when you make toast. Every time one fails, an engineer has to decide: is it the toast, or a real fire?
 
 **[→ next slide]**
 
