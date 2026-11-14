@@ -108,7 +108,7 @@ def main():
     ax.text(lo1, ax.get_ylim()[1] * 0.75, f" lo={lo1:.2f}", fontsize=9); ax.text(hi1, ax.get_ylim()[1] * 0.75, f" hi={hi1:.2f}", fontsize=9)
     ax.set_xlabel("Drex P(flaky)  (noul)"); ax.set_ylabel("# failures")
     ax.set_title("Drex probability by ground truth  (dashed = before learning, solid = after)")
-    ax.text(0.02, 0.6, "BLOCK", transform=ax.transAxes); ax.text(0.55, 0.6, "RETRY", transform=ax.transAxes); ax.text(0.9, 0.6, "QUAR.", transform=ax.transAxes)
+    ax.text(0.12, 0.6, "BLOCK", transform=ax.transAxes); ax.text(0.55, 0.6, "RETRY", transform=ax.transAxes); ax.text(0.9, 0.6, "QUAR.", transform=ax.transAxes)
     ax.legend(loc="upper left", bbox_to_anchor=(0.1, 0.99)); watermark(fig, dmode); fig.tight_layout(); fig.savefig(CHARTS / f"{mode}_prob_histogram.png", dpi=160); plt.close(fig)
     # 2. what the learning step weighed: cost on all failures under each threshold choice (replayed, no new calls)
     from policy import decide as _d
@@ -142,7 +142,7 @@ def main():
         b = ax.bar([short[n] for n in names], v, color=[palette[short[n]] for n in names], edgecolor="black")
         ax.bar_label(b, labels=["pending" if t[n].get("n") is None else f"{t[n][key]:.3g}" if t[n][key] is not None else "n/a" for n in names])
         ax.set_title(title, fontsize=10)
-    fig.suptitle(f"Drex ({out['drex_model']}) vs baselines  — held-out n={t['Drex (before learning)']['n']}"
+    fig.suptitle(f"Drex ({out['drex_model']}) vs baselines  — all failures, n={t['Drex (before learning)']['n']}"
                  + ("  ·  LLM baseline pending" if llm_pending else ""))
     watermark(fig, mode); fig.tight_layout(); fig.savefig(CHARTS / f"{mode}_drex_vs_llm.png", dpi=160); plt.close(fig)
     # copies at the filenames the deck expects
