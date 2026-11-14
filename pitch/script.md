@@ -5,9 +5,13 @@ All numbers below come from the real runs in `../results/metrics_real.md` (2026-
 
 ---
 
-## 0:00–0:20 · Slide 1: Title  (~45 words)
+## 0:00–0:10 · Adobe opener (only if `../adobe/opener.mp4` is in the deck)
 
-Hi, I'm Alexandra. Every time a CI build goes red, someone is making a bet. Is this test flaky, or did we just break something? Today I'll show you what happened when we stopped guessing, asked Drex how sure it was, and put a price on being wrong.
+**[Let the 10-second Adobe opener play. Don't talk over it. Advance when the tagline lands: "Flaky or real? Drex knows."]**
+
+## 0:10–0:30 · Slide 1: Title  (~45 words)
+
+**[If the opener was missing, start immediately.]** Hi, I'm Alexandra. Every time a CI build goes red, someone is making a bet. Is this test flaky, or did we just break something? Today I'll show you what happened when we stopped guessing, asked Drex how sure it was, and put a price on being wrong.
 
 **[→ next slide]**
 

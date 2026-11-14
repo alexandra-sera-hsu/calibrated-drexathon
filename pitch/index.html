@@ -99,6 +99,21 @@
   #counter{position:fixed;right:18px;bottom:14px;font-size:13px;color:#888;z-index:10;font-family:ui-monospace,Menlo,monospace}
   #help{position:fixed;left:18px;bottom:14px;font-size:13px;color:#888;z-index:10;opacity:.0;transition:opacity .3s}
   body:hover #help{opacity:.8}
+  /* adobe opener: plays on slide 1 only when ../adobe/opener.mp4 exists */
+  #opener-wrap{display:none;position:absolute;inset:0;background:var(--bg);z-index:3}
+  .slide.has-opener{padding:0}
+  .slide.has-opener::before{display:none}
+  .slide.has-opener .title-wrap,
+  .slide.has-opener > footer{display:none}
+  .slide.has-opener #opener-wrap{display:block}
+  #opener-video{width:100%;height:100%;object-fit:contain;background:var(--bg);display:block}
+  #opener-credit,#opener-skip{
+    position:absolute;bottom:36px;font-size:22px;z-index:4;
+    background:rgba(247,247,244,.88);padding:8px 18px;border-radius:10px;color:var(--muted)
+  }
+  #opener-credit{left:48px}
+  #opener-credit b{color:var(--accent);font-weight:700}
+  #opener-skip{right:48px}
   @media print{
     html,body{overflow:visible;background:#fff}
     #viewport{position:static;display:block}
@@ -114,6 +129,11 @@
 
 <!-- ============ 1. TITLE ============ -->
 <section class="slide" data-title="Title">
+  <div id="opener-wrap" aria-hidden="true">
+    <video id="opener-video" muted loop playsinline preload="auto" src="../adobe/opener.mp4"></video>
+    <div id="opener-credit">Made with <b>Adobe Firefly</b> + <b>Adobe Express</b></div>
+    <div id="opener-skip">Press → to continue</div>
+  </div>
   <div class="title-wrap">
     <div class="kicker">Team Calibrated · Nace AI Drexathon · Apex Predator track</div>
     <h1>Flaky or real?<br><span class="accent">Let Drex decide.</span></h1>
@@ -285,6 +305,20 @@
   const stage=document.getElementById('stage');
   const prog=document.getElementById('progress'), ctr=document.getElementById('counter');
   let i=0;
+  const opener=document.getElementById('opener-video');
+  const titleSlide=document.querySelector('.slide[data-title="Title"]');
+  if(opener && titleSlide){
+    const arm=()=>{
+      titleSlide.classList.add('has-opener');
+      opener.muted=true;
+      opener.loop=true;
+      opener.playsInline=true;
+      opener.play().catch(()=>{});
+    };
+    opener.addEventListener('loadeddata',arm);
+    opener.addEventListener('canplay',()=>{ if(opener.readyState>=2) arm(); });
+    opener.addEventListener('error',()=>titleSlide.classList.remove('has-opener'));
+  }
   // image slots: load if file exists, otherwise show placeholder
   document.querySelectorAll('.imgslot').forEach(s=>{
     const img=s.querySelector('img');
@@ -303,6 +337,14 @@
     prog.style.width=((i+1)/slides.length*100)+'%';
     ctr.textContent=(i+1)+' / '+slides.length;
     if(location.hash!=='#'+(i+1)) history.replaceState(null,'','#'+(i+1));
+    if(opener){
+      if(slides[i].classList.contains('has-opener')){
+        try{opener.currentTime=0}catch(e){}
+        opener.play().catch(()=>{});
+      }else{
+        opener.pause();
+      }
+    }
   }
   document.addEventListener('keydown',e=>{
     const k=e.key;
