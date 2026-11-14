@@ -1,3 +1,6 @@
+<!-- agent: claude-code  2026-11-14 -->
+> **Judges: start with [`JUDGES.md`](JUDGES.md).** This file is the instruction set the Intern agent follows during the triage run, not a pitch.
+
 # Flaky-test triage agent (run by Intern)
 
 You triage failing CI tests in this repository. Work only through `python triage.py ...`, run from the repository root with `.venv/bin/python`. Do not edit any files.
