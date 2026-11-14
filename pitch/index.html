@@ -157,7 +157,7 @@
       <h3>Why it matters</h3>
       <ul class="clean">
         <li style="font-size:30px"><b>58 of 60</b> failures (97%) scored below 0.1 or above 0.9, so they can be handled automatically.</li>
-        <li style="font-size:30px">A “retry passed ⇒ flaky” rule <b>quarantined 2 real bugs</b> that Drex blocked.</li>
+        <li style="font-size:30px">A “retry passed ⇒ flaky” rule <b>quarantined 2 real bugs</b> that Drex blocked. Frontier LLMs hedged with <b>RETRY on 41 of 60</b>.</li>
         <li style="font-size:30px">Wrongly quarantining a real bug costs <b>20×</b> a wasted rerun (120 vs 6 eng-min).</li>
       </ul>
     </div>
@@ -183,7 +183,7 @@
     <div><b>RETRY</b>0.40 ≤ P(flaky) &lt; 0.80</div>
     <div><b style="color:#B42318">BLOCK + ALERT</b>P(flaky) &lt; 0.40</div>
   </div>
-  <div class="loop"><span class="ret">↺</span> <span><b style="color:var(--ink)">5 · Feedback:</b> human corrections refit both thresholds against the cost table. The thresholds only move when moving them lowers total cost. <b style="color:var(--ink)">Orchestrated by Intern</b>, the Nace harness: Drex is System 1 and a DeepInfra model is System 2, calling the extract, decide, act and feedback tools.</span></div>
+  <div class="loop"><span class="ret">↺</span> <span><b style="color:var(--ink)">5 · Feedback:</b> human corrections refit both thresholds against the cost table. The thresholds only move when moving them lowers total cost. <b style="color:var(--ink)">Run by Intern</b>, the Nace harness. Qwen3.8-27B on DeepInfra did the work and Drex was System 1, supervising every turn: 3 cases, 15 tool calls, 16 Drex checks, completed in 6 turns.</span></div>
   <footer><span>Built with <b>Drex</b> · <b>Intern</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>4 / 7</span></footer>
 </section>
 
@@ -206,18 +206,18 @@
 <!-- ============ 6. RESULTS ============ -->
 <section class="slide" data-title="Results">
   <div class="kicker">Results · same failures, same cost table</div>
-  <h2 style="margin-bottom:30px;font-size:60px">Drex vs. a frontier LLM, before and after learning.</h2>
+  <h2 style="margin-bottom:30px;font-size:60px">Drex: 48% lower cost, 8× faster than a frontier LLM.</h2>
   <div class="res-grid">
     <div>
       <table>
-        <tr><th>Metric</th><th class="drex">Drex + policy</th><th>Frontier LLM <span style="text-transform:none;letter-spacing:0">(<span class="ph" style="font-size:18px">[MODEL]</span> on DeepInfra)</span></th></tr>
-        <tr><td>Accuracy</td><td class="drex">96.7%</td><td><span class="ph">[RESULT: accuracy]</span></td></tr>
-        <tr><td>Real bugs quarantined</td><td class="drex">0</td><td><span class="ph">[RESULT: count]</span></td></tr>
-        <tr><td>Expected cost</td><td class="drex">118 eng-min</td><td><span class="ph">[RESULT: cost]</span></td></tr>
-        <tr><td>Latency (median)</td><td class="drex">292 ms</td><td><span class="ph">[RESULT: ms]</span></td></tr>
-        <tr><td>$ / 1k decisions</td><td class="drex">$0.072</td><td><span class="ph">[RESULT: $]</span></td></tr>
+        <tr><th>Metric</th><th class="drex">Drex + policy</th><th>Frontier LLM <span style="text-transform:none;letter-spacing:0">(Llama-3.3-70B on DeepInfra)</span></th></tr>
+        <tr><td>Accuracy</td><td class="drex">96.7%</td><td>85.0%</td></tr>
+        <tr><td>Real bugs quarantined</td><td class="drex">0</td><td>0</td></tr>
+        <tr><td>Expected cost</td><td class="drex">118 eng-min</td><td>228 eng-min</td></tr>
+        <tr><td>Latency (median)</td><td class="drex">292 ms</td><td>2,456 ms</td></tr>
+        <tr><td>$ / 1k decisions</td><td class="drex">$0.072</td><td>$0.064</td></tr>
       </table>
-      <p class="cap">Evaluated on 60 labeled CI failures (Drex drex-max-v1.1, real API). Cost table, in eng-min: quarantining a real bug = 120, blocking a flaky test = 25, retrying = 4–6. Rule baseline “retry passed ⇒ quarantine”: 93.3% accuracy, 2 real bugs quarantined, cost 358. LLM column pending the DeepInfra run.</p>
+      <p class="cap">Evaluated on 60 labeled CI failures (Drex drex-max-v1.1, real API). Cost table, in eng-min: quarantining a real bug = 120, blocking a flaky test = 25, retrying = 4–6. Rule baseline “retry passed ⇒ quarantine”: 93.3% accuracy, 2 real bugs quarantined, cost 358. DeepSeek-V3.2 on DeepInfra: 88.3% accuracy, cost 210, 1,618 ms, $0.154/1k. The LLMs never wrongly quarantined a real bug, but they hedged: they chose RETRY on 41 (Llama) and 36 (DeepSeek) of 60 failures. Drex + policy retried 0.</p>
     </div>
     <div class="res-right">
       <div class="imgslot" data-src="../results/drex_vs_llm.png">

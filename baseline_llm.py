@@ -20,7 +20,7 @@ from drexflaky.common import LOGS, load_env, load_labels, resolve_mode, result_p
 BASE_URL = "https://api.deepinfra.com/v1/openai"
 MODEL = os.environ.get("LLM_MODEL", "meta-llama/Llama-3.3-70B-Instruct-Turbo")
 # $/M tokens from GET https://api.deepinfra.com/v1/openai/models metadata.pricing (checked 2026-11-14)
-PRICES = {"meta-llama/Llama-3.3-70B-Instruct-Turbo": (0.10, 0.32), "deepseek-ai/DeepSeek-V3.2": (0.26, 0.38)}
+PRICES = {"meta-llama/Llama-3.3-70B-Instruct-Turbo": (0.10, 0.32), "deepseek-ai/DeepSeek-V3.2": (0.26, 0.38)}  # else read live from /models
 
 SYSTEM = """You triage failing CI tests. Decide if a failure is FLAKY (caused by the test or CI environment:
 timeouts on shared infra, races in test code, network blips, test-order coupling, resource exhaustion) or REAL
@@ -55,11 +55,20 @@ def main():
     ap.add_argument("--mock", action="store_true")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--model", default=None, help="DeepInfra model id (default: $LLM_MODEL or Llama-3.3-70B-Instruct-Turbo)")
+    ap.add_argument("--tag", default="llm", help="results file stem, e.g. llm2 for a second baseline")
     a = ap.parse_args()
+    global MODEL
+    MODEL = a.model or MODEL
     load_env()
     mode = resolve_mode(a.mock, "DEEPINFRA_API_KEY")
     cases = load_labels()[: a.limit]
-    pin, pout = PRICES.get(MODEL, (0.10, 0.32))
+    pin, pout = PRICES.get(MODEL, (None, None))
+    if pin is None:
+        import requests
+        meta_ = {m["id"]: (m.get("metadata") or {}).get("pricing") or {} for m in requests.get(BASE_URL + "/models", timeout=20).json()["data"]}
+        pr = meta_.get(MODEL, {})
+        pin, pout = pr.get("input_tokens", 0.0), pr.get("output_tokens", 0.0)
 
     if mode == "real":
         from openai import OpenAI
@@ -69,7 +78,7 @@ def main():
             text = (LOGS / f"{c['case_id']}.log").read_text()
             t0 = time.perf_counter()
             try:
-                r = client.chat.completions.create(model=MODEL, temperature=0, max_tokens=200,
+                r = client.chat.completions.create(model=MODEL, temperature=0, max_tokens=400,
                                                    messages=[{"role": "system", "content": SYSTEM},
                                                              {"role": "user", "content": text[-3500:]}])
                 ms = (time.perf_counter() - t0) * 1000
@@ -93,8 +102,8 @@ def main():
     usd = tin / 1e6 * pin + tout / 1e6 * pout
     meta = {"mode": mode, "model": MODEL + (" (MOCK)" if mode == "mock" else ""), "price_per_m": {"input": pin, "output": pout},
             "usd_total": usd, "usd_per_1k": usd / max(len(ok), 1) * 1000, "errors": len(recs) - len(ok)}
-    write_json(result_path("llm", mode), {**meta, "cases": recs})
-    print(f"[llm] mode={mode} model={meta['model']} n={len(recs)} errors={meta['errors']} -> {result_path('llm', mode)}")
+    write_json(result_path(a.tag, mode), {**meta, "cases": recs})
+    print(f"[llm] mode={mode} model={meta['model']} n={len(recs)} errors={meta['errors']} -> {result_path(a.tag, mode)}")
 
 
 if __name__ == "__main__":

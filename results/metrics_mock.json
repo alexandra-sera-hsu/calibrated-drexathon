@@ -48,7 +48,7 @@
         "p50_latency_ms": 0.0,
         "usd_per_1k_decisions": 0.0
       },
-      "LLM baseline": {
+      "LLM baseline: meta-llama/Llama-3.3-70B-Instruct-Turbo (MOCK) (DeepInfra)": {
         "n": 44,
         "accuracy": 0.682,
         "wrong_quarantines_of_real_bugs": 3,
@@ -94,7 +94,7 @@
         "p50_latency_ms": 0.0,
         "usd_per_1k_decisions": 0.0
       },
-      "LLM baseline": {
+      "LLM baseline: meta-llama/Llama-3.3-70B-Instruct-Turbo (MOCK) (DeepInfra)": {
         "n": 60,
         "accuracy": 0.733,
         "wrong_quarantines_of_real_bugs": 3,

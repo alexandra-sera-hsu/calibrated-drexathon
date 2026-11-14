@@ -45,6 +45,7 @@ def main():
     # Drex real + no DeepInfra key -> "real" view with the LLM row as an explicit placeholder (never mock numbers)
     mode = "real" if dmode == "real" else "mock"
     llm_pending = dmode == "real" and lmode != "real"
+    out_llm_models = []
     costs = load_costs()
     labels = {r["case_id"]: r for r in load_labels()}
     drex_all = read_json(result_path("drex", dmode)); drex = {c["case_id"]: c for c in drex_all["cases"]}
@@ -70,13 +71,19 @@ def main():
             t = out["tables"][split]
             t["LLM baseline (DeepInfra) - PENDING"] = {k: None for k in next(iter(t.values()))}
         else:
-            out["tables"][split]["LLM baseline"] = metrics(rows, [llm[i]["action"] for i in ids], [llm[i]["label"] for i in ids], costs,
-                                                           [llm[i].get("latency_ms") for i in ids], llm_all.get("usd_per_1k"))
+            for tag in ("llm", "llm2"):
+                pth = result_path(tag, lmode)
+                if not pth.exists():
+                    continue
+                la = read_json(pth); lc = {c["case_id"]: c for c in la["cases"]}
+                out["tables"][split][f"LLM baseline: {la['model']} (DeepInfra)"] = metrics(
+                    rows, [lc[i]["action"] for i in ids], [lc[i]["label"] for i in ids], costs,
+                    [lc[i].get("latency_ms") for i in ids], la.get("usd_per_1k"))
     write_json(RESULTS / f"metrics_{mode}.json", out)
 
     # markdown table
     lines = [f"**{banner(mode)}**" + (" (Drex + NDI real; LLM baseline pending: no DEEPINFRA_API_KEY yet)" if llm_pending else "") + "  ",
-             f"Drex model: `{out['drex_model']}` · LLM: `{'pending (no DEEPINFRA_API_KEY)' if llm_pending else out['llm_model']}` · thresholds {learn['thresholds_before']} → {learn['thresholds_after']}", ""]
+             f"Drex model: `{out['drex_model']}` · LLM: `{'pending (no DEEPINFRA_API_KEY)' if llm_pending else 'Llama-3.3-70B-Instruct-Turbo, DeepSeek-V3.2 (DeepInfra)'}` · thresholds {learn['thresholds_before']} → {learn['thresholds_after']}", ""]
     for split in ("heldout", "all"):
         t = out["tables"][split]
         n = t["Drex (before learning)"]["n"]
@@ -132,15 +139,20 @@ def main():
     # 3. Drex vs baselines
     fig, axes = plt.subplots(1, 4, figsize=(13, 4))
     names = [n for n in t if t[n].get("n") is not None and n != "Drex (before learning)"]
-    short = {n: ("Drex" if n.startswith("Drex") else "Rule" if n.startswith("Rule") else "LLM") for n in names}
+    def _short(n):
+        if n.startswith("Drex"): return "Drex"
+        if n.startswith("Rule"): return "Rule"
+        return n.split(": ", 1)[-1].split("/")[-1].replace(" (DeepInfra)", "").replace("Llama-3.3-70B-Instruct-Turbo", "Llama-3.3\n70B").replace("DeepSeek-V3.2", "DeepSeek\nV3.2")
+    short = {n: _short(n) for n in names}
     if llm_pending:
         names.append("LLM baseline (DeepInfra) - PENDING"); short[names[-1]] = "LLM\n(pending)"
     palette = {"Drex": "#1f77b4", "Rule": "#7f7f7f", "LLM": "#ff7f0e", "LLM\n(pending)": "#ffffff"}
     for ax, key, title in zip(axes, ["expected_cost_eng_min", "wrong_quarantines_of_real_bugs", "p50_latency_ms", "usd_per_1k_decisions"],
                               ["expected cost (eng-min) ↓", "real bugs quarantined ↓", "p50 latency ms ↓", "$ per 1k decisions ↓"]):
         v = [(t[n][key] or 0) for n in names]
-        b = ax.bar([short[n] for n in names], v, color=[palette[short[n]] for n in names], edgecolor="black")
-        ax.bar_label(b, labels=["pending" if t[n].get("n") is None else f"{t[n][key]:.3g}" if t[n][key] is not None else "n/a" for n in names])
+        b = ax.bar([short[n] for n in names], v, color=[palette.get(short[n], "#ff7f0e") for n in names], edgecolor="black")
+        ax.tick_params(axis="x", labelsize=7)
+        ax.bar_label(b, labels=["pending" if t[n].get("n") is None else ((f"{t[n][key]:.0f}" if t[n][key] >= 100 else f"{t[n][key]:.3g}") if t[n][key] is not None else "n/a") for n in names])
         ax.set_title(title, fontsize=10)
     fig.suptitle(f"Drex ({out['drex_model']}) vs baselines  — all failures, n={t['Drex (before learning)']['n']}"
                  + ("  ·  LLM baseline pending" if llm_pending else ""))

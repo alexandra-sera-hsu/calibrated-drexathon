@@ -1,7 +1,7 @@
 # Speaker script: "Flaky or real? Let Drex decide." (5:00)
 
 Pace: about 130 words per minute. Spoken text is about 650 words. Lines in **[brackets]** are stage directions; don't say them.
-Before you start, fill every `[RESULT: …]` and `[INSIGHT: …]` with the real numbers from `../results/`. If a number isn't ready, drop the sentence. Don't guess.
+All numbers below come from the real runs in `../results/metrics_real.md` (2026-11-14). Don't change them without re-running.
 
 ---
 
@@ -33,7 +33,7 @@ Drex split the failures into two clean clusters: all 24 real regressions scored 
 
 ## 1:35–2:00 · Slide 4: How it works  (~60 words)
 
-The loop runs as an Intern session, Nace's agent harness, with Drex as its System 1. It has four steps. NDI, Nace Document Intelligence, turns a raw CI log into structured fields. Drex takes that state and a typed question and returns P(flaky). A two-threshold policy turns that number into an action: quarantine, retry, or block and alert. Then human corrections recalibrate the thresholds against our cost table.
+We ran the loop as an Intern session, Nace's agent harness. Qwen on DeepInfra does the work, and Drex is System 1, checking every turn and guarding every tool call. It has four steps. NDI, Nace Document Intelligence, turns a raw CI log into structured fields. Drex takes that state and a typed question and returns P(flaky). A two-threshold policy turns that number into an action: quarantine, retry, or block and alert. Then human corrections recalibrate the thresholds against our cost table.
 
 **[→ next slide]**
 
@@ -57,11 +57,11 @@ The whole thing took **[read latency]**. That's fast enough to sit inside CI as 
 
 ## 3:30–4:20 · Slide 6: Results  (~105 words)
 
-Here are the head-to-head results. We used the same 60 labeled failures and the same cost table, with Drex plus our policy on one side and [MODEL] on DeepInfra on the other.
+Here are the head-to-head results. We used the same 60 labeled failures and the same cost table, with Drex plus our policy on one side and Llama 3.3 70B on DeepInfra on the other. We also ran DeepSeek V3.2.
 
-Accuracy is 96.7 percent versus [RESULT: LLM accuracy]. Look at the row that matters most, though: real bugs wrongly quarantined, zero versus [RESULT: LLM count]. Expected cost is 118 engineer-minutes versus [RESULT: LLM cost].
+Accuracy is 96.7 percent versus 85. Look at the row that matters most, though: real bugs wrongly quarantined, zero versus zero. The LLM is careful, but it pays for that with hedging: it said RETRY on 41 of 60 failures, and Drex retried none. So expected cost is 118 engineer-minutes versus 228, about half. DeepSeek came in at 210.
 
-It's also faster, 292 milliseconds versus [RESULT: LLM latency], and cheaper, at about seven cents versus [RESULT: LLM $/1k] per thousand decisions.
+It's also faster, 292 milliseconds versus about 2.5 seconds, more than 8 times faster. Per thousand decisions it costs about seven cents, the same ballpark as Llama at six cents and half of DeepSeek's fifteen.
 
 **[point at lower chart]** And this is the learning loop. The thresholds we learned held cost at 118. Trusting the cost table alone would have cost 132, and forcing a fix for the one disagreement would have cost 484.
 

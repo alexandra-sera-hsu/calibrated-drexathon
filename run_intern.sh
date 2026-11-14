@@ -9,7 +9,7 @@ export PATH="$HOME/.local/bin:$PATH"
 [ -f .env ] && set -a && . ./.env && set +a
 : "${NACE_API_KEY:?NACE_API_KEY is required (Intern's System 1 is Drex)}"
 : "${DEEPINFRA_API_KEY:?DEEPINFRA_API_KEY is required (Intern's System 2 runs on DeepInfra)}"
-MODEL="${INTERN_SYSTEM2:-deepinfra/deepseek-ai/DeepSeek-V3.2}"
+MODEL="${INTERN_SYSTEM2:-deepinfra/Qwen/Qwen3.8-27B}"
 CASES="${*:-case_007 case_041 case_049}"
 rm -f results/intern_thresholds.json results/intern_feedback.json
 mkdir -p results

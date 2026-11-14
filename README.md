@@ -57,7 +57,7 @@ python demo.py --live           # re-calls Drex live for the demo case
 | `baseline_llm.py` | DeepInfra OpenAI-compatible endpoint, `meta-llama/Llama-3.3-70B-Instruct-Turbo` by default (`LLM_MODEL` overrides it), with the same cost table in the prompt |
 | `compare.py` | `results/metrics_<mode>.{md,json}` and `results/charts/<mode>_*.png` |
 | `demo.py` | scripted rich terminal demo for one ambiguous failure |
-| `triage.py`, `AGENTS.md`, `run_intern.sh` | the same loop as tools for an Intern session |
+| `triage.py`, `AGENTS.md`, `run_intern.sh`, `intern_excerpt.py` | the same loop as tools for an Intern session, plus a readable replay of the recorded run |
 
 ## Verified API shapes
 
@@ -80,10 +80,15 @@ The response is `answers.is_flaky.noul` (P(yes), 0 to 1), along with `confidence
 
 ## Results
 
-These are **real** Drex (`drex-max-v1.1`) and NDI results, from 60 real `POST /v1/systemone` calls and 60 of 60 NDI extract jobs, run 2026-11-14. The **LLM baseline is pending** until there's a DeepInfra key, and no LLM numbers are shown until it actually runs. The rule baseline is a deterministic local heuristic (retry passed ⇒ quarantine, else block). Mock-mode outputs (`results/*_mock.*`) are synthetic and watermarked.
+These are **real** API results from 2026-11-14:
+- Drex (`drex-max-v1.1`): 60 `POST /v1/systemone` calls.
+- NDI: 60 of 60 extract jobs.
+- DeepInfra LLM baselines: 60 calls per model.
 
-**REAL API RESULTS** (Drex + NDI real; LLM baseline pending: no DEEPINFRA_API_KEY yet)  
-Drex model: `drex-max-v1.1` · LLM: `pending (no DEEPINFRA_API_KEY)` · thresholds {'lo': 0.4, 'hi': 0.8} → {'lo': 0.4, 'hi': 0.8}
+The rule baseline is a deterministic local heuristic (retry passed ⇒ quarantine, else block). Mock-mode outputs (`results/*_mock.*`) are synthetic and watermarked.
+
+**REAL API RESULTS**  
+Drex model: `drex-max-v1.1` · LLM: `Llama-3.3-70B-Instruct-Turbo, DeepSeek-V3.2 (DeepInfra)` · thresholds {'lo': 0.4, 'hi': 0.8} → {'lo': 0.4, 'hi': 0.8}
 
 ### Held-out cases (n=44)
 
@@ -92,7 +97,8 @@ Drex model: `drex-max-v1.1` · LLM: `pending (no DEEPINFRA_API_KEY)` · threshol
 | Drex (before learning) | 95.5% | 0 | 2 | 0 | 98 | 277 | $0.0724 |
 | Drex (after learning) | 95.5% | 0 | 2 | 0 | 98 | 277 | $0.0724 |
 | Rule baseline (retry passed => quarantine, else block) | 93.2% | 1 | 2 | 0 | 218 | 0 | $0.0000 |
-| LLM baseline (DeepInfra) - PENDING | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |
+| LLM baseline: meta-llama/Llama-3.3-70B-Instruct-Turbo (DeepInfra) | 84.1% | 0 | 2 | 29 | 176 | 2107 | $0.0642 |
+| LLM baseline: deepseek-ai/DeepSeek-V3.2 (DeepInfra) | 88.6% | 0 | 2 | 26 | 162 | 1597 | $0.1538 |
 
 ### All cases (n=60)
 
@@ -101,7 +107,8 @@ Drex model: `drex-max-v1.1` · LLM: `pending (no DEEPINFRA_API_KEY)` · threshol
 | Drex (before learning) | 96.7% | 0 | 2 | 0 | 118 | 292 | $0.0724 |
 | Drex (after learning) | 96.7% | 0 | 2 | 0 | 118 | 292 | $0.0724 |
 | Rule baseline (retry passed => quarantine, else block) | 93.3% | 2 | 2 | 0 | 358 | 0 | $0.0000 |
-| LLM baseline (DeepInfra) - PENDING | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |
+| LLM baseline: meta-llama/Llama-3.3-70B-Instruct-Turbo (DeepInfra) | 85.0% | 0 | 2 | 41 | 228 | 2456 | $0.0642 |
+| LLM baseline: deepseek-ai/DeepSeek-V3.2 (DeepInfra) | 88.3% | 0 | 2 | 36 | 210 | 1618 | $0.1538 |
 
 ![P(flaky) by truth](results/prob_histogram.png)
 ![learning step](results/cost_before_after.png)
@@ -113,6 +120,7 @@ Drex model: `drex-max-v1.1` · LLM: `pending (no DEEPINFRA_API_KEY)` · threshol
 - **The learning step is honest about what it can and can't fix.** The 16 day-1 human labels changed **0** decisions. The cost-minimising refit keeps lo = 0.40 and hi = 0.80, and the band of equally good thresholds is wide: any lo from 0.08 to 0.80, or any hi from 0.40 to 0.93. Held-out cost is 98 → 98.
 - **The one confident disagreement doesn't move the thresholds.** That's case_049 or case_058: a flaky order-dependence failure where both retries failed and the PR touched `settings.py`, and Drex gave P ≈ 0.001. The cheapest threshold change that "fixes" it raises total cost on all 60 cases from **118 to 484** eng-min, so the loop keeps the thresholds and sends the pattern to the evidence backlog instead. A useful next fix is to add a "passes in isolation" signal to the state.
 - **The cost table alone isn't enough.** If P were perfectly calibrated, the cost table would pick lo = 0.22, hi = 0.98. On these probabilities that costs 110 vs 98 on held-out, because Drex's 0.93–0.98 flaky cases would be retried instead of quarantined. Fitting on labels beats trusting the cost table alone.
+- **The frontier LLMs are careful but hedge.** Llama-3.3-70B and DeepSeek-V3.2 never quarantined a real bug, but they chose RETRY on 41 and 36 of 60 failures, which costs 4–6 eng-min each. Drex + policy retried none. Total cost was 118 for Drex vs 228 and 210 for the LLMs, with 292 ms vs 2,456 and 1,618 ms p50 latency.
 - **Cost:** NDI cost $0.228 for all 60 logs, as reported by the SDK job cost; some pages were cache hits. Drex used 36,224 input tokens, about $0.004 at an assumed $0.12/M for Drex Max. Drex Max probabilities are not bit-identical between calls (case_007: 0.074 cached vs 0.107 live), so the stage demo replays the logged values.
 
 What the cost table says before any data arrives: if P(flaky) were perfectly calibrated, the expected-cost-optimal cut points would be **lo ≈ 0.22, hi ≈ 0.98**. A wrong quarantine is so expensive that you should only auto-quarantine when Drex is very sure. A yes/no classifier cannot express that. A probability can.
@@ -122,7 +130,7 @@ What the cost table says before any data arrives: if P(flaky) were perfectly cal
 [Intern](https://github.com/nace-ai/intern) is the Nace agent harness. Its **System 2** model does the work by calling tools, and its **System 1**, a decision model, watches every turn and guards tool calls. Here System 1 is **Drex** (`drex:drex-max-v1.1`, from the Nace console) and System 2 is a **DeepInfra** model (default `deepseek-ai/DeepSeek-V3.2`).
 
 ```bash
-uv tool install "intern-agent @ git+https://github.com/nace-ai/intern"
+uv tool install --python 3.12 "intern-agent @ git+https://github.com/nace-ai/intern"
 ./run_intern.sh case_007 case_041 case_049      # needs NACE_API_KEY + DEEPINFRA_API_KEY
 ```
 
@@ -133,6 +141,12 @@ uv tool install "intern-agent @ git+https://github.com/nace-ai/intern"
 - `truth`, then `feedback`: the human label, then the threshold refit
 
 Every tool call is journaled to `results/intern_actions.jsonl`, and the Intern event stream goes to `results/intern_run.jsonl`. The agent never chooses the action itself. The policy does.
+
+**Recorded run** (`results/intern_excerpt.md`, replay it with `python intern_excerpt.py`):
+- System 2: `deepinfra/Qwen/Qwen3.8-27B`. System 1: `drex:drex-max-v1.1`.
+- 3 cases (case_007, case_041, case_049), 5 tool-call turns, 15 triage commands. NDI was used for all 3 extractions.
+- 16 Drex System 1 checks (guard, supervise, wrap-up), 0 failed. The run completed in 6 turns and 39 s.
+- Policy actions: BLOCK, BLOCK, BLOCK. The human labels were real, real, flaky, and the thresholds held at 0.40/0.80.
 
 ## License
 
