@@ -49,8 +49,18 @@ def main():
     costs = load_costs()
     lo0, hi0 = learn["thresholds_before"]["lo"], learn["thresholds_before"]["hi"]
     lo1, hi1 = learn["thresholds_after"]["lo"], learn["thresholds_after"]["hi"]
-    cid = a.case or (max(learn["corrections"], key=lambda c: c["cost_before"] - c["cost_after"])["case_id"]
-                     if learn["corrections"] else "case_007")
+    labels = {x["case_id"]: x for x in learn["replay"]}
+    def rule(i):
+        return "QUARANTINE" if ndi[i]["fields"].get("retry_passed") else "BLOCK"
+    if a.case:
+        cid = a.case
+    elif learn["corrections"]:
+        cid = max(learn["corrections"], key=lambda c: c["cost_before"] - c["cost_after"])["case_id"]
+    else:
+        # ambiguous real regression where the naive rule (retry passed => flaky) would quarantine and Drex does not
+        traps = [x for x in learn["replay"] if x["ambiguous"] and x["truth"] == "real" and rule(x["case_id"]) == "QUARANTINE"
+                 and x["after"] != "QUARANTINE"]
+        cid = min(traps, key=lambda x: x["p_flaky"])["case_id"] if traps else learn["replay"][0]["case_id"]
     truth = next(x["truth"] for x in learn["replay"] if x["case_id"] == cid)
 
     color = "green" if mode == "real" else "bold red"
@@ -87,8 +97,13 @@ def main():
     con.print(f"  Q: [italic]Is this failure caused by test flakiness rather than a real code regression?[/italic]")
     con.print(f"  [bold]P(flaky) = {p:.3f}[/bold]   [dim]model={drex[cid].get('model')} · {src} · "
               f"latency={drex[cid].get('latency_ms')}ms[/dim]")
-    con.print(f"  [dim]LLM baseline on the same log said: {llm[cid]['action']} ({llm[cid]['label']})"
-              f"{' [MOCK]' if llm_mode == 'mock' else ''}[/dim]")
+    con.print(f"  [dim]Rule baseline (retry passed => flaky) says: {rule(cid)}[/dim]")
+    if llm_mode == "real":
+        con.print(f"  [dim]LLM baseline on the same log said: {llm[cid]['action']} ({llm[cid]['label']})[/dim]")
+    elif mode == "mock":
+        con.print(f"  [dim]LLM baseline on the same log said: {llm[cid]['action']} ({llm[cid]['label']}) [MOCK][/dim]")
+    else:
+        con.print("  [dim]LLM baseline (DeepInfra): pending[/dim]")
 
     beat("4 · Policy decides (thresholds from day 0)", a.step)
     d0 = decide(p, lo0, hi0)
@@ -96,22 +111,43 @@ def main():
 
     beat("5 · A human reviews the outcome", a.step)
     c0 = costs[(truth, d0)]
-    con.print(f"  Human label: [bold]{truth.upper()}[/bold].  Cost of '{d0}' on a {truth} failure = [bold red]{c0:.0f} eng-min[/bold red]"
-              if c0 > 10 else f"  Human label: [bold]{truth.upper()}[/bold].  Cost = {c0:.0f} eng-min")
+    cr = costs[(truth, rule(cid))]
+    con.print(f"  Human label: [bold]{truth.upper()}[/bold].  Drex+policy cost = [bold]{c0:.0f}[/bold] eng-min · "
+              f"rule baseline ({rule(cid)}) cost = [bold]{cr:.0f}[/bold] eng-min")
 
     beat(f"6 · Feedback round: {learn['feedback_n']} labelled failures recalibrate the thresholds", a.step)
-    tt = Table("case", "P(flaky)", "was", "human", "now", "cost")
-    for c in learn["corrections"]:
-        tt.add_row(c["case_id"], f"{c['p_flaky']:.3f}", c["decision_before"], c["human_says"], c["decision_after"],
-                   f"{c['cost_before']:.0f} → {c['cost_after']:.0f}")
-    con.print(tt)
-    con.print(f"  lo {lo0:.2f} → [bold]{lo1:.2f}[/bold]   hi {hi0:.2f} → [bold]{hi1:.2f}[/bold]   "
-              f"[dim](cost-optimal if perfectly calibrated: lo={learn['cost_derived_if_calibrated']['lo']:.2f}, "
-              f"hi={learn['cost_derived_if_calibrated']['hi']:.2f})[/dim]")
+    if learn["corrections"]:
+        tt = Table("case", "P(flaky)", "was", "human", "now", "cost")
+        for c in learn["corrections"]:
+            tt.add_row(c["case_id"], f"{c['p_flaky']:.3f}", c["decision_before"], c["human_says"], c["decision_after"],
+                       f"{c['cost_before']:.0f} → {c['cost_after']:.0f}")
+        con.print(tt)
+    else:
+        con.print(f"  {learn['feedback_n']} human labels, [bold]0[/bold] decisions they would change.")
+    band = learn.get("safe_band") or {}
+    con.print(f"  lo {lo0:.2f} → [bold]{lo1:.2f}[/bold]   hi {hi0:.2f} → [bold]{hi1:.2f}[/bold]"
+              + (f"   safe band: lo ∈ {band.get('lo')}, hi ∈ {band.get('hi')}" if band else ""))
+    con.print(f"  [dim]cost table alone (if perfectly calibrated) would pick lo={learn['cost_derived_if_calibrated']['lo']:.2f}, "
+              f"hi={learn['cost_derived_if_calibrated']['hi']:.2f}; held-out cost there = {learn.get('heldout_cost_cost_derived', 'n/a')}"
+              f" vs {learn['heldout_cost_after']:.0f}[/dim]")
 
-    beat("7 · Replay the logged probability with the new thresholds", a.step)
     d1 = decide(p, lo1, hi1)
-    con.print(f"  same P(flaky)={p:.3f}  →  [bold green]{d1}[/bold green]   ({reason(p, lo1, hi1)})   cost {c0:.0f} → {costs[(truth, d1)]:.0f} eng-min")
+    if d1 != d0:
+        beat("7 · Replay the logged probability with the new thresholds", a.step)
+        con.print(f"  same P(flaky)={p:.3f}  →  [bold green]{d1}[/bold green]   ({reason(p, lo1, hi1)})   cost {c0:.0f} → {costs[(truth, d1)]:.0f} eng-min")
+    dis = learn.get("confident_disagreements") or []
+    if dis:
+        w = dis[0]
+        beat(f"7 · A human overrides Drex on {w['case_id']}: should the thresholds move?", a.step)
+        con.print(f"  {w['case_id']}: P(flaky)={w['p_flaky']:.4f} → {w['decision']}; human says [bold]{w['truth'].upper()}[/bold] "
+                  f"(cost {w['cost']:.0f} eng-min)")
+        con.print(f"  refit with this correction → lo={w['refit_thresholds']['lo']:.2f}, hi={w['refit_thresholds']['hi']:.2f} "
+                  f"([bold]unchanged[/bold])")
+        f = w.get("cheapest_fix")
+        if f:
+            con.print(f"  forcing a fix needs lo={f['lo']:.4f}: total cost on all 60 failures {f['all60_cost_current']:.0f} → "
+                      f"[bold red]{f['all60_cost_with_fix']:.0f}[/bold red] eng-min. The loop keeps the thresholds and routes "
+                      f"this pattern to the evidence backlog (state/question), not the thresholds.")
     con.print(f"  across all 60 logged failures: {learn['all_cost_before']:.0f} → {learn['all_cost_after']:.0f} eng-min; "
               f"held-out only: {learn['heldout_cost_before']:.0f} → {learn['heldout_cost_after']:.0f}")
     md = RESULTS / f"metrics_{mode}.md"

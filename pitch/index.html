@@ -115,7 +115,7 @@
     <p class="hook">Our CI was already guessing on every red build. <strong>We made it say how sure it is — and priced being wrong.</strong></p>
     <div class="byline"><span class="pill">Alexandra</span> Associate Engineer, Agentic Experiences · San Francisco · Nov 14, 2026</div>
   </div>
-  <footer><span>Built with <b>Drex</b> · <b>NDI</b> (Nace Document Intelligence) · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>1 / 7</span></footer>
+  <footer><span>Built with <b>Drex</b> · <b>Intern</b> (Nace harness) · <b>NDI</b> (Nace Document Intelligence) · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>1 / 7</span></footer>
 </section>
 
 <!-- ============ 2. PROBLEM ============ -->
@@ -137,17 +137,17 @@
       </div>
       <h3 style="margin-top:36px">Ask Drex and you get a probability</h3>
       <div class="verdict">
-        <div class="good"><span class="mono">P(flaky) = <span class="ph">[RESULT: example p]</span></span><br><span class="muted" style="font-size:24px">Calibrated. You choose where to act.</span></div>
+        <div class="good"><span class="mono">P(flaky) = 0.074 <span class="muted" style="font-size:22px">(case_007, a real race bug whose retry passed)</span></span><br><span class="muted" style="font-size:24px">Calibrated. You choose where to act.</span></div>
       </div>
     </div>
   </div>
-  <footer><span>Built with <b>Drex</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>2 / 7</span></footer>
+  <footer><span>Built with <b>Drex</b> · <b>Intern</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>2 / 7</span></footer>
 </section>
 
 <!-- ============ 3. THE LEARNING ============ -->
 <section class="slide" data-title="The learning">
   <div class="kicker">What the probabilities revealed</div>
-  <div class="insight"><span class="ph" style="white-space:normal">[INSIGHT: headline learning — e.g. what the shape of the P(flaky) distribution says about flaky vs. real failures]</span></div>
+  <div class="insight">Drex split the failures into two clean clusters: all 24 real regressions scored P(flaky) ≤ 0.35, 34 of 36 flaky failures scored ≥ 0.93, and none landed in the 0.40–0.80 retry band. That includes two real race-condition bugs whose retry <i>passed</i>, which a “retry passed ⇒ flaky” rule would have quarantined.</div>
   <div class="grid2" style="grid-template-columns:1.45fr 1fr">
     <div class="imgslot" data-src="../results/prob_histogram.png">
       <img alt="Histogram of Drex P(flaky) across CI failures, split by true label">
@@ -156,13 +156,13 @@
     <div class="card" style="display:flex;flex-direction:column;justify-content:center">
       <h3>Why it matters</h3>
       <ul class="clean">
-        <li style="font-size:30px"><span class="ph">[RESULT: share of failures Drex is confident about]</span> can be auto-handled.</li>
-        <li style="font-size:30px">The middle band is where a verdict model is <b>confidently wrong</b> — <span class="ph">[RESULT: LLM error rate in middle band]</span>.</li>
-        <li style="font-size:30px">Wrongly quarantining a real bug costs <span class="ph">[RESULT: cost ratio]</span>× a wasted rerun.</li>
+        <li style="font-size:30px"><b>58 of 60</b> failures (97%) scored below 0.1 or above 0.9, so they can be handled automatically.</li>
+        <li style="font-size:30px">A “retry passed ⇒ flaky” rule <b>quarantined 2 real bugs</b> that Drex blocked.</li>
+        <li style="font-size:30px">Wrongly quarantining a real bug costs <b>20×</b> a wasted rerun (120 vs 6 eng-min).</li>
       </ul>
     </div>
   </div>
-  <footer><span>Built with <b>Drex</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>3 / 7</span></footer>
+  <footer><span>Built with <b>Drex</b> · <b>Intern</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>3 / 7</span></footer>
 </section>
 
 <!-- ============ 4. HOW IT WORKS ============ -->
@@ -179,12 +179,12 @@
     <div class="node"><div class="tag">4 · Policy</div><h3>Two thresholds</h3><p>Turn a probability into an action, priced by a cost table.</p></div>
   </div>
   <div class="policy">
-    <div><b class="accent">QUARANTINE</b>P(flaky) ≥ <span class="ph">[RESULT: t_high]</span></div>
-    <div><b>RETRY</b><span class="ph">[RESULT: t_low]</span> ≤ P(flaky) &lt; <span class="ph">[RESULT: t_high]</span></div>
-    <div><b style="color:#B42318">BLOCK + ALERT</b>P(flaky) &lt; <span class="ph">[RESULT: t_low]</span></div>
+    <div><b class="accent">QUARANTINE</b>P(flaky) ≥ 0.80</div>
+    <div><b>RETRY</b>0.40 ≤ P(flaky) &lt; 0.80</div>
+    <div><b style="color:#B42318">BLOCK + ALERT</b>P(flaky) &lt; 0.40</div>
   </div>
-  <div class="loop"><span class="ret">↺</span> <span><b style="color:var(--ink)">5 · Feedback:</b> human corrections recalibrate both thresholds against the cost table — wrongly quarantining a real bug is the expensive mistake.</span></div>
-  <footer><span>Built with <b>Drex</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>4 / 7</span></footer>
+  <div class="loop"><span class="ret">↺</span> <span><b style="color:var(--ink)">5 · Feedback:</b> human corrections refit both thresholds against the cost table. The thresholds only move when moving them lowers total cost. <b style="color:var(--ink)">Orchestrated by Intern</b>, the Nace harness: Drex is System 1 and a DeepInfra model is System 2, calling the extract, decide, act and feedback tools.</span></div>
+  <footer><span>Built with <b>Drex</b> · <b>Intern</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>4 / 7</span></footer>
 </section>
 
 <!-- ============ 5. LIVE DEMO ============ -->
@@ -193,14 +193,14 @@
     <div class="kicker">Live demo</div>
     <div class="demo-big">Watch it decide.</div>
     <div class="term">
-      <div><span class="d">$</span> <span class="c">[DEMO: command to run the loop on a fresh CI failure]</span></div>
+      <div><span class="d">$</span> <span class="c">python demo.py --live</span></div>
       <div class="d"># 1. NDI pulls fields from the log</div>
       <div class="d"># 2. Drex returns P(flaky)</div>
       <div class="d"># 3. Policy picks QUARANTINE / RETRY / BLOCK</div>
-      <div class="d"># 4. A human correction moves the thresholds</div>
+      <div class="d"># 4. A human correction is tested against the cost table: do the thresholds move?</div>
     </div>
   </div>
-  <footer><span>Built with <b>Drex</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>5 / 7</span></footer>
+  <footer><span>Built with <b>Drex</b> · <b>Intern</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>5 / 7</span></footer>
 </section>
 
 <!-- ============ 6. RESULTS ============ -->
@@ -211,13 +211,13 @@
     <div>
       <table>
         <tr><th>Metric</th><th class="drex">Drex + policy</th><th>Frontier LLM <span style="text-transform:none;letter-spacing:0">(<span class="ph" style="font-size:18px">[MODEL]</span> on DeepInfra)</span></th></tr>
-        <tr><td>Accuracy</td><td class="drex"><span class="ph">[RESULT: accuracy]</span></td><td><span class="ph">[RESULT: accuracy]</span></td></tr>
-        <tr><td>Real bugs quarantined</td><td class="drex"><span class="ph">[RESULT: count]</span></td><td><span class="ph">[RESULT: count]</span></td></tr>
-        <tr><td>Expected cost</td><td class="drex"><span class="ph">[RESULT: cost]</span></td><td><span class="ph">[RESULT: cost]</span></td></tr>
-        <tr><td>Latency (median)</td><td class="drex"><span class="ph">[RESULT: ms]</span></td><td><span class="ph">[RESULT: ms]</span></td></tr>
-        <tr><td>$ / 1k decisions</td><td class="drex"><span class="ph">[RESULT: $]</span></td><td><span class="ph">[RESULT: $]</span></td></tr>
+        <tr><td>Accuracy</td><td class="drex">96.7%</td><td><span class="ph">[RESULT: accuracy]</span></td></tr>
+        <tr><td>Real bugs quarantined</td><td class="drex">0</td><td><span class="ph">[RESULT: count]</span></td></tr>
+        <tr><td>Expected cost</td><td class="drex">118 eng-min</td><td><span class="ph">[RESULT: cost]</span></td></tr>
+        <tr><td>Latency (median)</td><td class="drex">292 ms</td><td><span class="ph">[RESULT: ms]</span></td></tr>
+        <tr><td>$ / 1k decisions</td><td class="drex">$0.072</td><td><span class="ph">[RESULT: $]</span></td></tr>
       </table>
-      <p class="cap">Evaluated on <span class="ph">[RESULT: n failures]</span> labeled CI failures. Cost table: <span class="ph">[RESULT: cost table summary]</span>.</p>
+      <p class="cap">Evaluated on 60 labeled CI failures (Drex drex-max-v1.1, real API). Cost table, in eng-min: quarantining a real bug = 120, blocking a flaky test = 25, retrying = 4–6. Rule baseline “retry passed ⇒ quarantine”: 93.3% accuracy, 2 real bugs quarantined, cost 358. LLM column pending the DeepInfra run.</p>
     </div>
     <div class="res-right">
       <div class="imgslot" data-src="../results/drex_vs_llm.png">
@@ -226,11 +226,11 @@
       </div>
       <div class="imgslot" data-src="../results/cost_before_after.png">
         <img alt="Expected cost before and after threshold recalibration">
-        <div class="fallback">&lt;img src="../results/cost_before_after.png"&gt;<br>[CHART: cost before → after learning]<br>[RESULT: expected cost before → after]</div>
+        <div class="fallback">&lt;img src="../results/cost_before_after.png"&gt;<br>[CHART: cost before → after learning]<br>118 → 118 eng-min (thresholds held)</div>
       </div>
     </div>
   </div>
-  <footer><span>Built with <b>Drex</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>6 / 7</span></footer>
+  <footer><span>Built with <b>Drex</b> · <b>Intern</b> · <b>NDI</b> · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>6 / 7</span></footer>
 </section>
 
 <!-- ============ 7. WHY / NEXT / ASK ============ -->
@@ -263,7 +263,7 @@
       </ul>
     </div>
   </div>
-  <footer><span>Built with <b>Drex</b> · <b>NDI</b> (Nace Document Intelligence) · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>7 / 7</span></footer>
+  <footer><span>Built with <b>Drex</b> · <b>Intern</b> (Nace harness) · <b>NDI</b> (Nace Document Intelligence) · <b>DeepInfra</b> · <b>Adobe Express</b></span><span>7 / 7</span></footer>
 </section>
 
 </div></div>

@@ -33,6 +33,55 @@
       "cost_after": 4.0
     }
   ],
+  "safe_band": {
+    "lo": [
+      0.24,
+      0.79
+    ],
+    "hi": [
+      0.82,
+      0.86
+    ]
+  },
+  "heldout_cost_cost_derived": 143.0,
+  "confident_disagreements": [
+    {
+      "case_id": "case_049",
+      "p_flaky": 0.2065,
+      "truth": "flaky",
+      "decision": "BLOCK",
+      "cost": 25.0,
+      "ideal": "QUARANTINE",
+      "refit_thresholds": {
+        "lo": 0.2,
+        "hi": 0.82
+      },
+      "cheapest_fix": {
+        "lo": 0.04,
+        "hi": 0.82,
+        "all60_cost_with_fix": 150.0,
+        "all60_cost_current": 150.0
+      }
+    },
+    {
+      "case_id": "case_058",
+      "p_flaky": 0.2732,
+      "truth": "flaky",
+      "decision": "BLOCK",
+      "cost": 25.0,
+      "ideal": "QUARANTINE",
+      "refit_thresholds": {
+        "lo": 0.27,
+        "hi": 0.82
+      },
+      "cheapest_fix": {
+        "lo": 0.24,
+        "hi": 0.82,
+        "all60_cost_with_fix": 135.0,
+        "all60_cost_current": 150.0
+      }
+    }
+  ],
   "heldout_n": 44,
   "heldout_cost_before": 122.0,
   "heldout_cost_after": 122.0,

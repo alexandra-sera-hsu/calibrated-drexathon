@@ -66,8 +66,9 @@ def ndi_extract(client, path) -> dict:
     if job.status != "succeeded":
         job = client.jobs.wait(job.job_id, timeout=180)
     data = job.result["data"] if isinstance(job.result, dict) else job.result.data
-    return {"fields": data, "job_id": str(job.job_id),
-            "cost": getattr(job, "cost", None) and str(job.cost)}
+    cost = getattr(job, "cost", None)
+    usd = float(cost.total_usd) if cost is not None and getattr(cost, "total_usd", None) is not None else None
+    return {"fields": data, "job_id": str(job.job_id), "cost": usd}
 
 
 def process(case, mode, client):
@@ -103,7 +104,13 @@ def main():
     with ThreadPoolExecutor(a.workers if mode == "real" else 1) as ex:
         recs = list(ex.map(lambda c: process(c, mode, client), cases))
     used = {p: sum(r["path"] == p for r in recs) for p in ("ndi", "local_regex")}
-    write_json(result_path("ndi", mode), {"mode": mode, "paths_used": used, "schema": SCHEMA, "cases": recs})
+    usd = sum(r.get("ndi_cost") or 0 for r in recs)
+    # agreement with the local regex extractor (sanity check of NDI output)
+    keys = ("error_type", "retry_passed", "recent_fail_rate", "duration_seconds")
+    agree = {k: sum(str(r["fields"].get(k)) == str(local_extract((LOGS / f"{r['case_id']}.log").read_text()).get(k)) for r in recs) for k in keys}
+    write_json(result_path("ndi", mode), {"mode": mode, "paths_used": used, "ndi_usd_total": usd,
+                                          "agreement_with_regex": agree, "schema": SCHEMA, "cases": recs})
+    print(f"  NDI cost ${usd:.4f}; agreement with regex: {agree}")
     print(f"[ndi_extract] mode={mode} paths={used} -> {result_path('ndi', mode)}")
     for r in recs:
         if r.get("fallback_reason") and mode == "real":

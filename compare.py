@@ -42,11 +42,14 @@ def main():
     load_env()
     dmode = resolve_mode(a.mock, "NACE_API_KEY")
     lmode = resolve_mode(a.mock, "DEEPINFRA_API_KEY")
-    mode = "real" if (dmode == "real" and lmode == "real") else ("mock" if dmode == lmode == "mock" else "mixed")
+    # Drex real + no DeepInfra key -> "real" view with the LLM row as an explicit placeholder (never mock numbers)
+    mode = "real" if dmode == "real" else "mock"
+    llm_pending = dmode == "real" and lmode != "real"
     costs = load_costs()
     labels = {r["case_id"]: r for r in load_labels()}
     drex_all = read_json(result_path("drex", dmode)); drex = {c["case_id"]: c for c in drex_all["cases"]}
     llm_all = read_json(result_path("llm", lmode)); llm = {c["case_id"]: c for c in llm_all["cases"]}
+    ndi = {c["case_id"]: c for c in read_json(result_path("ndi", dmode))["cases"]}
     learn = read_json(result_path("learn", dmode)); rep = {x["case_id"]: x for x in learn["replay"]}
 
     out = {"mode": {"drex": dmode, "llm": lmode}, "drex_model": drex_all.get("model_requested"), "llm_model": llm_all.get("model"),
@@ -59,21 +62,30 @@ def main():
         out["tables"][split] = {
             "Drex (before learning)": metrics(rows, [rep[i]["before"] for i in ids], dl, costs, lat, drex_all.get("usd_per_1k")),
             "Drex (after learning)": metrics(rows, [rep[i]["after"] for i in ids], dl, costs, lat, drex_all.get("usd_per_1k")),
-            "LLM baseline": metrics(rows, [llm[i]["action"] for i in ids], [llm[i]["label"] for i in ids], costs,
-                                    [llm[i].get("latency_ms") for i in ids], llm_all.get("usd_per_1k")),
+            "Rule baseline (retry passed => quarantine, else block)": metrics(
+                rows, ["QUARANTINE" if ndi[i]["fields"].get("retry_passed") else "BLOCK" for i in ids],
+                ["flaky" if ndi[i]["fields"].get("retry_passed") else "real" for i in ids], costs, [0.0] * len(ids), 0.0),
         }
+        if llm_pending:
+            t = out["tables"][split]
+            t["LLM baseline (DeepInfra) - PENDING"] = {k: None for k in next(iter(t.values()))}
+        else:
+            out["tables"][split]["LLM baseline"] = metrics(rows, [llm[i]["action"] for i in ids], [llm[i]["label"] for i in ids], costs,
+                                                           [llm[i].get("latency_ms") for i in ids], llm_all.get("usd_per_1k"))
     write_json(RESULTS / f"metrics_{mode}.json", out)
 
     # markdown table
-    lines = [f"**{banner(mode) if mode != 'mixed' else 'MIXED: Drex=' + dmode + ', LLM=' + lmode}**  ",
-             f"Drex model: `{out['drex_model']}` · LLM: `{out['llm_model']}` · thresholds {learn['thresholds_before']} → {learn['thresholds_after']}", ""]
+    lines = [f"**{banner(mode)}**" + (" (Drex + NDI real; LLM baseline pending: no DEEPINFRA_API_KEY yet)" if llm_pending else "") + "  ",
+             f"Drex model: `{out['drex_model']}` · LLM: `{'pending (no DEEPINFRA_API_KEY)' if llm_pending else out['llm_model']}` · thresholds {learn['thresholds_before']} → {learn['thresholds_after']}", ""]
     for split in ("heldout", "all"):
         t = out["tables"][split]
-        n = next(iter(t.values()))["n"]
+        n = t["Drex (before learning)"]["n"]
         lines += [f"### {'Held-out cases' if split == 'heldout' else 'All cases'} (n={n})", "",
                   "| System | Accuracy (flaky vs real) | Real bugs quarantined | Needless blocks | Retries | Expected cost (eng-min) | p50 latency (ms) | $ / 1k decisions |",
                   "|---|---|---|---|---|---|---|---|"]
         for k, m in t.items():
+            if m.get("n") is None:
+                lines.append(f"| {k} | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ | _pending_ |"); continue
             usd = f"${m['usd_per_1k_decisions']:.4f}" if m["usd_per_1k_decisions"] is not None else "n/a"
             lat = f"{m['p50_latency_ms']:.0f}" if m["p50_latency_ms"] is not None else "n/a"
             lines.append(f"| {k} | {m['accuracy']:.1%} | {m['wrong_quarantines_of_real_bugs']} | {m['needless_blocks']} | {m['retries']} | "
@@ -98,27 +110,46 @@ def main():
     ax.set_title("Drex probability by ground truth  (dashed = before learning, solid = after)")
     ax.text(0.02, 0.6, "BLOCK", transform=ax.transAxes); ax.text(0.55, 0.6, "RETRY", transform=ax.transAxes); ax.text(0.9, 0.6, "QUAR.", transform=ax.transAxes)
     ax.legend(loc="upper left", bbox_to_anchor=(0.1, 0.99)); watermark(fig, dmode); fig.tight_layout(); fig.savefig(CHARTS / f"{mode}_prob_histogram.png", dpi=160); plt.close(fig)
-    # 2. cost before/after (feedback set, held-out, all)
-    rp = learn["replay"]
-    groups = {"feedback set\n(human-corrected)": [x for x in rp if x["feedback_set"]],
-              "held-out\n(never seen)": [x for x in rp if not x["feedback_set"]], "all": rp}
-    fig, ax = plt.subplots(figsize=(7.5, 4.5))
-    xs = range(len(groups)); w = 0.38
-    bb = ax.bar([x - w / 2 for x in xs], [sum(r["cost_before"] for r in g) for g in groups.values()], w, color="#9e9e9e", label=f"before (lo={lo0:.2f}, hi={hi0:.2f})")
-    ba = ax.bar([x + w / 2 for x in xs], [sum(r["cost_after"] for r in g) for g in groups.values()], w, color="#1f77b4", label=f"after (lo={lo1:.2f}, hi={hi1:.2f})")
-    ax.bar_label(bb, fmt="%.0f"); ax.bar_label(ba, fmt="%.0f")
-    ax.set_xticks(list(xs)); ax.set_xticklabels(list(groups)); ax.set_ylabel("expected cost (eng-minutes)")
-    ax.set_title(f"Learning from {len(learn['corrections'])} human corrections"); ax.legend()
+    # 2. what the learning step weighed: cost on all failures under each threshold choice (replayed, no new calls)
+    from policy import decide as _d
+    allp = [(drex[i]["p_flaky"], r["truth"]) for i, r in labels.items()]
+    def c_at(lo, hi):
+        return sum(costs[(tr, _d(p, lo, hi))] for p, tr in allp)
+    cd = learn["cost_derived_if_calibrated"]
+    opts = [(f"day-0\n({lo0:.2f}/{hi0:.2f})", c_at(lo0, hi0), "#9e9e9e"),
+            (f"learned from\n{learn['feedback_n']} labels\n({lo1:.2f}/{hi1:.2f})", c_at(lo1, hi1), "#1f77b4"),
+            (f"cost-table only\n({cd['lo']:.2f}/{cd['hi']:.2f})", c_at(cd["lo"], cd["hi"]), "#bcbd22")]
+    for w in learn.get("confident_disagreements", [])[:1]:
+        f = w.get("cheapest_fix")
+        if f:
+            opts.append((f"move lo to 'fix'\n{w['case_id']}\n({f['lo']:.4f}/{f['hi']:.2f})", c_at(f["lo"], f["hi"]), "#d62728"))
+    fig, ax = plt.subplots(figsize=(8, 4.6))
+    b = ax.bar([o[0] for o in opts], [o[1] for o in opts], color=[o[2] for o in opts], edgecolor="black"); ax.bar_label(b, fmt="%.0f")
+    ax.set_ylabel(f"expected cost, all {len(allp)} failures (eng-min)")
+    ax.set_title("Learning step: which thresholds minimise cost? (replayed Drex probabilities)", fontsize=10)
+    ax.tick_params(axis="x", labelsize=8)
     watermark(fig, dmode); fig.tight_layout(); fig.savefig(CHARTS / f"{mode}_cost_before_after.png", dpi=160); plt.close(fig)
-    # 3. Drex vs LLM
+    # 3. Drex vs baselines
     fig, axes = plt.subplots(1, 4, figsize=(13, 4))
-    names = ["Drex (after learning)", "LLM baseline"]; cols = ["#1f77b4", "#ff7f0e"]
+    names = [n for n in t if t[n].get("n") is not None and n != "Drex (before learning)"]
+    short = {n: ("Drex" if n.startswith("Drex") else "Rule" if n.startswith("Rule") else "LLM") for n in names}
+    if llm_pending:
+        names.append("LLM baseline (DeepInfra) - PENDING"); short[names[-1]] = "LLM\n(pending)"
+    palette = {"Drex": "#1f77b4", "Rule": "#7f7f7f", "LLM": "#ff7f0e", "LLM\n(pending)": "#ffffff"}
     for ax, key, title in zip(axes, ["expected_cost_eng_min", "wrong_quarantines_of_real_bugs", "p50_latency_ms", "usd_per_1k_decisions"],
                               ["expected cost (eng-min) ↓", "real bugs quarantined ↓", "p50 latency ms ↓", "$ per 1k decisions ↓"]):
-        v = [t[n][key] or 0 for n in names]
-        b = ax.bar(["Drex", "LLM"], v, color=cols); ax.bar_label(b, fmt="%.3g"); ax.set_title(title, fontsize=10)
-    fig.suptitle(f"Drex ({out['drex_model']}) vs {out['llm_model']}  — held-out n={t[names[0]]['n']}")
+        v = [(t[n][key] or 0) for n in names]
+        b = ax.bar([short[n] for n in names], v, color=[palette[short[n]] for n in names], edgecolor="black")
+        ax.bar_label(b, labels=["pending" if t[n].get("n") is None else f"{t[n][key]:.3g}" if t[n][key] is not None else "n/a" for n in names])
+        ax.set_title(title, fontsize=10)
+    fig.suptitle(f"Drex ({out['drex_model']}) vs baselines  — held-out n={t['Drex (before learning)']['n']}"
+                 + ("  ·  LLM baseline pending" if llm_pending else ""))
     watermark(fig, mode); fig.tight_layout(); fig.savefig(CHARTS / f"{mode}_drex_vs_llm.png", dpi=160); plt.close(fig)
+    # copies at the filenames the deck expects
+    import shutil
+    if mode == "real":
+        for nm in ("prob_histogram", "cost_before_after", "drex_vs_llm"):
+            shutil.copyfile(CHARTS / f"real_{nm}.png", RESULTS / f"{nm}.png")
     print(f"charts -> {CHARTS}/{mode}_*.png")
 
 

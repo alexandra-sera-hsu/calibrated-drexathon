@@ -25,27 +25,27 @@ So we asked a frontier LLM, and it gives you a verdict: "this test is flaky." It
 
 Here's what we learned before we wrote much software. **[point at histogram]** This is Drex's probability of flaky across every failure we scored, split by what was actually true.
 
-[INSIGHT: say the headline in one sentence.]
+Drex split the failures into two clean clusters: all 24 real regressions scored P(flaky) ≤ 0.35, 34 of 36 flaky failures scored ≥ 0.93, and none landed in the 0.40–0.80 retry band. That includes two real race-condition bugs whose retry passed, which a “retry passed ⇒ flaky” rule would have quarantined.
 
-[RESULT: share] of failures sit at the confident ends, and those can be handled automatically. The middle band is where the trouble is. That's where a verdict model is confidently wrong: [RESULT: LLM error rate in middle band]. And when it's wrong in the expensive direction, it costs [RESULT: cost ratio] times a wasted rerun. That's why we wanted a probability and not a verdict.
+58 of 60 failures sit at the confident ends, and those can be handled automatically. Look at the two real race-condition bugs: their retry passed, so a simple 'retry passed means flaky' rule quarantines them. Drex put them at 7 and 9 percent. That mistake costs 20 times a wasted rerun. That's why we wanted a probability and not a verdict.
 
 **[→ next slide]**
 
 ## 1:35–2:00 · Slide 4: How it works  (~60 words)
 
-The loop has four steps. NDI, Nace Document Intelligence, turns a raw CI log into structured fields. Drex takes that state and a typed question and returns P(flaky). A two-threshold policy turns that number into an action: quarantine, retry, or block and alert. Then human corrections recalibrate the thresholds against our cost table.
+The loop runs as an Intern session, Nace's agent harness, with Drex as its System 1. It has four steps. NDI, Nace Document Intelligence, turns a raw CI log into structured fields. Drex takes that state and a typed question and returns P(flaky). A two-threshold policy turns that number into an action: quarantine, retry, or block and alert. Then human corrections recalibrate the thresholds against our cost table.
 
 **[→ next slide]**
 
 ## 2:00–3:30 · Slide 5: LIVE DEMO  (~170 words)
 
-**[SWITCH TO LIVE TERMINAL NOW. Run: `[DEMO: command]`]**
+**[SWITCH TO LIVE TERMINAL NOW. Run: `python demo.py --live --step`. If the network fails, run `python demo.py --offline --step`.]**
 
-This is a fresh CI failure the system hasn't seen. **[run it]**
+This is case 7, a real bug that looks flaky: the PR removed a lock, and the retry passed. **[run it]**
 
 First, NDI extracts the fields: the error type, the test name, timing, and the retry history. Next is the Drex call. Notice that what comes back is a number, P(flaky) equals **[read it]**, not a paragraph. Then the policy applies. It's above or below our thresholds, so the action is **[read action]**.
 
-Now the important part. **[run a failure where the decision was wrong, or enter a human correction]** Say an engineer marks this one: "no, that was a real bug." That correction goes into the feedback step. We recompute expected cost against the cost table, and you can see the thresholds move from **[read old]** to **[read new]**. The model didn't change. Our policy got smarter about what a mistake costs.
+Now the feedback step. Sixteen human labels went in, and they changed zero decisions. The thresholds held at 0.40 and 0.80, and anywhere from 0.08 to 0.80 for the low threshold gives the same cost. Then an engineer overrides Drex on case 49: "that one was flaky." Should the thresholds move? The loop checks against the cost table. Fixing that one case would push total cost from 118 to 484 engineer-minutes, so the thresholds stay put and the case goes to the evidence backlog. The loop learns not to overreact.
 
 The whole thing took **[read latency]**. That's fast enough to sit inside CI as a check.
 
@@ -57,13 +57,13 @@ The whole thing took **[read latency]**. That's fast enough to sit inside CI as 
 
 ## 3:30–4:20 · Slide 6: Results  (~105 words)
 
-Here are the head-to-head results. We used the same labeled failures and the same cost table, with Drex plus our policy on one side and [MODEL] on DeepInfra on the other.
+Here are the head-to-head results. We used the same 60 labeled failures and the same cost table, with Drex plus our policy on one side and [MODEL] on DeepInfra on the other.
 
-Accuracy is [RESULT: Drex accuracy] versus [RESULT: LLM accuracy]. Look at the row that matters most, though: real bugs wrongly quarantined, [RESULT: Drex count] versus [RESULT: LLM count]. Expected cost is [RESULT: Drex cost] versus [RESULT: LLM cost].
+Accuracy is 96.7 percent versus [RESULT: LLM accuracy]. Look at the row that matters most, though: real bugs wrongly quarantined, zero versus [RESULT: LLM count]. Expected cost is 118 engineer-minutes versus [RESULT: LLM cost].
 
-It's also faster, [RESULT: Drex latency] versus [RESULT: LLM latency], and cheaper, at [RESULT: Drex $/1k] versus [RESULT: LLM $/1k] per thousand decisions.
+It's also faster, 292 milliseconds versus [RESULT: LLM latency], and cheaper, at about seven cents versus [RESULT: LLM $/1k] per thousand decisions.
 
-**[point at lower chart]** And this is the learning loop. After human corrections, expected cost went from [RESULT: before] to [RESULT: after].
+**[point at lower chart]** And this is the learning loop. The thresholds we learned held cost at 118. Trusting the cost table alone would have cost 132, and forcing a fix for the one disagreement would have cost 484.
 
 **[→ next slide]**
 
