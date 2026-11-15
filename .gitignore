@@ -5,3 +5,5 @@
 __pycache__/
 *.pyc
 results/.cache/
+claude_gate/decisions.jsonl
+claude_gate/*.jsonl

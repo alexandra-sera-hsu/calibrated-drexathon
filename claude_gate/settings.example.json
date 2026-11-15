@@ -1,0 +1,20 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.venv/bin/python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/claude_gate/gate.py"
+            ],
+            "timeout": 8,
+            "statusMessage": "Drex deciding allow / ask / deny"
+          }
+        ]
+      }
+    ]
+  }
+}
